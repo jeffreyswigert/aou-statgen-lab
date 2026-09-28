@@ -11,8 +11,8 @@
 # stays with you. That split -- templates in the repo, real values outside
 # it -- is a habit worth keeping in your own projects.
 #
-# The pattern ${NAME:-fallback} means: "if NAME is already set (for example
-# by the sandbox, or typed before the command), keep it; otherwise use the
+# The pattern ${NAME:-fallback} means: "if NAME is already set (for
+# example, typed before the command), keep it; otherwise use the
 # fallback." It lets you override any single setting for one run:
 #     CHROM=21 bash scripts/01_fetch_genotypes.sh
 # =============================================================================
@@ -24,9 +24,7 @@ export DATA_MODE=aou
 # ---- FILL ME: three values from your workspace (instructor projects them) --
 
 # The cloud storage bucket this workspace may write to (starts with gs://).
-# (If a WORKSPACE_BUCKET is already set -- the local practice sandbox does
-# this -- we borrow it, so the same scripts run there unchanged.)
-export WORKSHOP_BUCKET="${WORKSHOP_BUCKET:-${WORKSPACE_BUCKET:-}}"
+export WORKSHOP_BUCKET="${WORKSHOP_BUCKET:-}"
 
 # The Google Cloud project that pays for queries and downloads.
 export BILLING_PROJECT="${BILLING_PROJECT:-}"

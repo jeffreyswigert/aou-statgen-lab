@@ -71,19 +71,6 @@ Q2="
 # Reading the query is half of understanding the phenotype.
 if [[ "${DRY_RUN:-}" == 1 ]]; then printf 'Query 1:%s\n\nQuery 2:%s\n' "$Q1" "$Q2"; exit 0; fi
 
-# --- Practice-sandbox detour (ignore during the real lab) -------------------
-# The free local sandbox used for rehearsal has no database; it ships a
-# pre-built height file instead. On the real VM this block does nothing.
-if [[ -n "${AOU_SANDBOX_ROOT:-}" ]]; then
-  echo 'SANDBOX: no database here. Using the sandbox pre-built height phenotype.'
-  mkdir -p lab_data
-  gsutil cp gs://ssgac-shared-phenotype-resources-2026/phenotypes/height.pheno lab_data/
-  gsutil cp gs://ssgac-shared-phenotype-resources-2026/phenotypes/covar.txt lab_data/
-  python3 scripts/build_pheno.py --from-sandbox
-  exit 0
-fi
-# ---------------------------------------------------------------------------
-
 command -v bq >/dev/null || { echo 'bq (the BigQuery tool) not found -- run this on the AoU Workbench VM.' >&2; exit 1; }
 
 # A helper that runs one query safely and saves the answer as a CSV file.

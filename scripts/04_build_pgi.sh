@@ -29,8 +29,8 @@ weights=lab_data/height_weights.txt
 if [[ ! -s "$weights" ]]; then
   if [[ "${DEMO_WEIGHTS:-}" == 1 ]]; then
     # Rehearsal-only escape hatch: invent random weights from our own
-    # variant list so the plumbing can be tested where no bucket exists
-    # (the practice sandbox). The results are NOISE, clearly labeled.
+    # variant list so the plumbing can be tested when the posted file is
+    # not reachable. The results are NOISE, clearly labeled.
     echo 'DEMO_WEIGHTS=1: fabricating STUB weights (plumbing test only -- results are noise).'
     awk 'BEGIN{print "rsid\teffect_allele\tweight"; srand(20260921)}
          {printf "%s\t%s\t%.5f\n", $2, $5, (rand()-0.5)/50}' \

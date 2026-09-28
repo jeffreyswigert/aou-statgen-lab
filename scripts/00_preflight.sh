@@ -34,11 +34,9 @@ command -v bq >/dev/null && echo 'bq available' || echo 'bq missing: the phenoty
 
 # Were the three FILL ME values actually filled? ":?" means "stop with this
 # message if the variable is empty" -- catching a skipped config edit now.
-# (Inside the local practice sandbox there is no database, so the CDR value
-# is excused there; everything else still applies.)
 : "${WORKSHOP_BUCKET:?Fill WORKSHOP_BUCKET in config.sh}"
 : "${BILLING_PROJECT:?Fill BILLING_PROJECT in config.sh}"
-[[ -n "${AOU_SANDBOX_ROOT:-}" ]] || : "${CDR_DATASET:?Fill CDR_DATASET in config.sh}"
+: "${CDR_DATASET:?Fill CDR_DATASET in config.sh}"
 
 # Enough disk space? (-h prints sizes in human units.)
 df -h .

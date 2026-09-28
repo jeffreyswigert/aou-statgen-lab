@@ -45,7 +45,7 @@ to the nearest 100, and counts of 1-20 are never printed at all (the
 All of Us dissemination policy forbids sharing small participant counts,
 including counts recoverable by subtracting two published numbers).
 """
-import csv, os, statistics, sys
+import csv, os, statistics
 from pathlib import Path
 
 OUT = Path('results/aou_pheno.tsv')
@@ -70,30 +70,6 @@ def write_out(rows):
     Path('results/pheno_meta.txt').write_text(
         f'id={PHENO}\nlabel={LABEL}\nunit={UNIT}\nsex_standardized={"yes" if SEXZ else "no"}\nnote={NOTE}\n')
 
-# --- Practice-sandbox detour (real lab skips this) --------------------------
-if '--from-sandbox' in sys.argv:
-    # The sandbox's ready-made file mimics a real quirk: some rows say the
-    # literal text "NA" instead of a number. Treating "NA" as a number
-    # crashes; treating it as data poisons averages. So: drop, and COUNT.
-    pheno, n_na = {}, 0
-    for line in Path('lab_data/height.pheno').read_text().splitlines():
-        fid, iid, value = line.split()
-        if value == 'NA':
-            n_na += 1
-        else:
-            pheno[iid] = float(value)
-    print(f'Dropped rows with NA phenotype: {rounded(n_na)}')
-    covar = {l.split()[1]: (l.split()[2], l.split()[3])
-             for l in Path('lab_data/covar.txt').read_text().splitlines()}
-    sexmap = {'1': 'Male', '2': 'Female'}    # this file codes sex as 1/2
-    rows = [[iid, f'{v:.4f}', f'{v:.4f}', covar.get(iid, ('', ''))[1],
-             sexmap.get(covar.get(iid, ('', ''))[0], 'other')]
-            for iid, v in sorted(pheno.items())]
-    write_out(rows)
-    print(f'SANDBOX phenotype adapted: ~{rounded(len(rows))} people '
-          '(values are pre-standardized practice numbers, not real units).')
-    sys.exit(0)
-# ---------------------------------------------------------------------------
 
 # Step 0: read every measurement into a dict of lists --
 # values_by_person['1234567'] ends up as that person's list of readings,

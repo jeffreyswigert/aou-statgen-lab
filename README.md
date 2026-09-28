@@ -104,6 +104,4 @@ ordinary regression does not account for relatives, five PCs are a
 convention rather than a guarantee, and a one-chromosome PGI is
 deliberately partial. To scale up: set `SAMPLE_MOD=1` for the full cohort,
 loop `CHROM` over 1–22 and sum the `.sscore` SUM columns, and swap in your
-own trait's concept ID and weights. A free local sandbox mirroring the
-platform's file conventions lets you debug all of this on your laptop
-before paying for a VM — ask your instructor for it.
+own trait's concept ID and weights.
