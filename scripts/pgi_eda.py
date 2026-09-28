@@ -42,6 +42,10 @@ pheno = {r[0]: r for r in prows}
 ah, arows = read_keyed('lab_data/ancestry_preds.tsv')
 anc = {r[0]: r[1] for r in arows}          # ID -> predicted ancestry label
 
+# Which phenotype did step 02 build? (So printouts name the right thing.)
+meta = dict(l.split('=', 1) for l in Path('results/pheno_meta.txt').read_text().splitlines())
+label = meta.get('label', 'phenotype')
+
 # The analysis set = people present in BOTH the scores and the phenotype.
 # (set intersection: '&' keeps only IDs that appear in both collections.)
 iids = sorted(set(score) & set(pheno))
@@ -65,11 +69,16 @@ out = ['PGI exploration -- aggregates only', '',
        f'Joined analysis set (both):    {rounded(len(iids))}',
        '(three files, three ID labels -- #IID, person_id, research_id --',
        ' one underlying ID. Joined on the value, checked, never assumed.)', '',
-       f'corr(PGI, within-sex height z) = {r:+.3f}',
+       f'corr(PGI, {label} z)            = {r:+.3f}',
        '',
        'A one-chromosome PGI is deliberately partial, so expect a modest',
        'correlation. What matters: you built it on real data, counted every',
        'match and every join, and can read the figure below honestly.']
+if meta.get('id', 'height') != 'height':
+    out += ['', f'NOTE: the posted weights are HEIGHT weights, but the phenotype is',
+            f'{label} -- so this correlation is CROSS-TRAIT (height PGI vs {label}),',
+            'which is usually near zero. A real analysis fetches weights for its',
+            'own trait; the mechanics you are practicing are identical.']
 
 # --- The figure: PGI density curves by predicted genetic ancestry.
 # (kde = smoothed histogram; see pheno_eda.py for the full explanation.)

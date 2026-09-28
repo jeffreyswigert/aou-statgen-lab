@@ -4,7 +4,8 @@ Materials for a one-hour lab run entirely on **real All of Us v9 data**
 (Controlled Tier required): 20 minutes of instruction, then 40 hands-on
 minutes in which you
 
-1. **explore** a real variable (summary statistics and histograms),
+1. **explore** a real variable — Stata-style `summarize` and
+   `summarize, detail` tables, histograms, and densities,
 2. **construct a phenotype** from raw CDR records — QC'd,
    plausibility-bounded, one row per person,
 3. **build a PGI** with PLINK on a single chromosome, from GWAS summary
@@ -72,6 +73,29 @@ outputs. Treat `.gitignore` as a compliance tool. The save step records
 this repo's commit hash in every run manifest (`code_version=`, with a
 `-dirty` flag for uncommitted edits), so each archived run names the exact
 code that produced it.
+
+## Swap in another phenotype
+
+The whole pipeline is a one-variable switch. `data/phenotypes.tsv` holds a
+menu of vetted numeric phenotypes — program measurements (height, weight,
+systolic BP) and EHR labs (LDL, HDL) — each row carrying its concept IDs,
+plausibility bounds, unit, standardization rule, and the caveat its source
+type is known for.
+
+```bash
+bash scripts/02_build_phenotype.sh list     # see the menu
+PHENO=ldl bash scripts/02_build_phenotype.sh
+bash scripts/03_explore_phenotype.sh        # tables/figures follow the switch
+bash scripts/05_pgi_regression.sh           # so does the regression
+```
+
+`DRY_RUN=1` on step 02 prints the SQL a choice would run, without spending
+a query. To add your own variable: find its concept ID in the public
+[Data Browser](https://databrowser.researchallofus.org), append a row to
+the menu, and check the resolved output carefully — a concept ID is a
+claim until the data confirm it. (The posted PGI weights are for height,
+so with another phenotype step 05 becomes a cross-trait regression — the
+output says so.)
 
 ## After the lab
 

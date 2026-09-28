@@ -66,6 +66,13 @@ export ANC_SRC="${ANC_SRC:-gs://vwb-aou-datasets-controlled/v9/wgs/short_read/sn
 # may give you a different gs:// address to paste here.
 export WEIGHTS_URI="${WEIGHTS_URI:-${WORKSHOP_BUCKET:+$WORKSHOP_BUCKET/pgi_workshop/height_weights.txt}}"
 
+# Which phenotype to build. Options live in data/phenotypes.tsv, one row
+# each with its database concept IDs, plausibility bounds, and caveats --
+# run "bash scripts/02_build_phenotype.sh list" to see them. The whole
+# pipeline downstream (explore, regression) follows this switch, so trying
+# another variable is one line:  PHENO=ldl bash scripts/02_build_phenotype.sh
+export PHENO="${PHENO:-height}"
+
 # Class-size switch: keep only people whose person_id divides evenly by this
 # number. 10 = roughly a tenth of the cohort (fast queries, quick joins).
 # 1 = everyone, for real work after the lab. Same code either way.

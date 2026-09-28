@@ -1,0 +1,6 @@
+id	label	concept_column	concept_ids	lo	hi	unit	sex_standardize	note
+height	Standing height	measurement_source_concept_id	903133	100	250	cm	yes	Program PM SOURCE concept, not the standard LOINC one (which silently pools in lower-quality EHR heights). Includes remote self-report.
+weight	Body weight	measurement_source_concept_id	903121	30	300	kg	yes	Same program-measurement family as height.
+bp_systolic	Systolic blood pressure	measurement_source_concept_id	903114,903130	70	250	mmHg	no	AoU takes BP three times per visit; the codebook summary is the mean of the 2ND and 3RD readings -- these are those two concepts (the discarded 1st is 903109).
+ldl	LDL cholesterol	measurement_concept_id	3028288,3028437,3009966	20	400	mg/dL	no	EHR lab: many values per person over years, and REAL analyses must also restrict units (mg/dL) -- this teaching pass relies on plausibility bounds alone. Direct and calculated LDL are separate concepts.
+hdl	HDL cholesterol	measurement_concept_id	3007070	10	200	mg/dL	no	EHR lab -- same caveats as LDL. LOINC 2085-9.
