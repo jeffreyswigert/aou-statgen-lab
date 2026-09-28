@@ -1,0 +1,10 @@
+# Your filled settings -- never committed (real workspace values stay local).
+config.sh
+# Downloaded real data and everything derived from it -- never committed.
+lab_data/
+results/
+runs/
+# A locally staged PLINK build, if any.
+tools/
+# Python bytecode cache.
+__pycache__/
