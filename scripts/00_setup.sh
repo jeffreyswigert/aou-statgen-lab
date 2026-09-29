@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 00_preflight.sh -- check the environment BEFORE doing any analysis.
+# 00_setup.sh -- check the environment BEFORE doing any analysis.
 #
 # Why a whole script for this: if a tool or setting is missing, we want the
 # lab to fail RIGHT HERE, with a message that says what to fix -- not five
@@ -41,8 +41,8 @@ command -v bq >/dev/null && echo 'bq available' || echo 'bq missing: the phenoty
 # Enough disk space? (-h prints sizes in human units.)
 df -h .
 
-printf 'Preflight passed. Next: bash scripts/01_fetch_genotypes.sh\n'
+printf 'Setup check passed. Next: bash scripts/01_fetch_genotypes.sh\n'
 
 # TRY IT: break something on purpose and watch this script catch it --
-#     PLINK2=/does/not/exist bash scripts/00_preflight.sh
+#     PLINK2=/does/not/exist bash scripts/00_setup.sh
 # A pipeline you have personally seen fail LOUDLY is one you can trust.

@@ -34,7 +34,8 @@ gflags=()
 echo "Copying chr${CHROM} HapMap3 genotypes from $GENO_SRC ..."
 # A for-loop: run the copy once for each of the three extensions.
 for ext in bed bim fam; do
-  gcloud "${gflags[@]}" storage cp "$GENO_SRC/chr${CHROM}_hm3.$ext" "lab_data/" \
+  gcloud "${gflags[@]}" storage cp \
+    "$GENO_SRC/$GENO_STEM.$ext" "lab_data/chr${CHROM}_hm3.$ext" \
     || { echo "Copy failed. Check GENO_SRC and BILLING_PROJECT in config.sh." >&2; exit 1; }
 done
 

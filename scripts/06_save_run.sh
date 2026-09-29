@@ -74,7 +74,8 @@ To download results to your own computer:
      by subtracting two numbers.
   3. JupyterLab file browser -> right-click the file -> Download.
 
-Then STOP YOUR CLOUD APP in the Workbench -- a running VM bills by the hour.
+Then STOP YOUR CLOUD APP (Apps tab -> your app -> Stop) -- a running VM bills
+by the hour. Stop keeps the app and its disk; your files will still be here.
 MSG
 
 # TRY IT: see the provenance you just created --

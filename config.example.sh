@@ -58,6 +58,10 @@ export CHROM="${CHROM:-22}"
 # Us's chromosome files (made with scripts/prep/make_hm3_subset.sh), in
 # the workshop bucket as chr22_hm3.bed/.bim/.fam.
 export GENO_SRC="${GENO_SRC:-${WORKSHOP_BUCKET:+${WORKSHOP_BUCKET%/}/genotypes}}"
+# The file-name stem of the three genotype files in GENO_SRC. Whatever it
+# is there, step 1 saves the copies as lab_data/chr${CHROM}_hm3.* so every
+# later step finds them. Change it only if GENO_SRC uses other names.
+export GENO_STEM="${GENO_STEM:-chr${CHROM}_hm3}"
 
 # All of Us's genetic-ancestry predictions (used for figure groups and the
 # regression's PCs). This bucket is "requester pays": downloads from it must

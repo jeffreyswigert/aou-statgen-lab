@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install_plink2.sh -- INSTRUCTOR runs this before class, once per VM.
-# Participants: if preflight says PLINK 2 is missing, ask the instructor
+# Participants: if 00_setup.sh says PLINK 2 is missing, ask the instructor
 # rather than installing your own -- mixed plink versions on one project are
 # a classic source of confusing, silent differences in output columns.
 # Instructor only, before class. Linux x86-64. Uses the tested official build.

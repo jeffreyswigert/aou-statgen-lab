@@ -5,7 +5,7 @@ A one-hour, step-by-step lab on **All of Us v9 Controlled Tier data**
 
 | Step | What it does | Script |
 |---|---|---|
-| 0 | Check tools and settings | `scripts/00_preflight.sh` |
+| 0 | Check tools and settings | `scripts/00_setup.sh` |
 | 1 | Copy chromosome-22 genotypes (HapMap3 variants) and the ancestry file to the VM | `scripts/01_fetch_genotypes.sh` |
 | 2 | Build a height phenotype from the CDR (BigQuery), one row per person | `scripts/02_build_phenotype.sh` |
 | 3 | Summary table (Stata `summarize` layout) and two figures | `scripts/03_explore_phenotype.sh` |
@@ -20,13 +20,13 @@ git commands for your own projects.
 ## Quick start (on your All of Us Workbench VM)
 
 Create a JupyterLab app (standard VM, 4 CPUs / 16 GB, 100 GB disk, autostop
-1 hour), open a Terminal from the Launcher, then:
+2 hours), open a Terminal from the Launcher, then:
 
 ```bash
 git clone https://github.com/jeffreyswigert/aou-statgen-lab.git
 cd aou-statgen-lab
 cp config.example.sh config.sh     # then fill WORKSHOP_BUCKET and BILLING_PROJECT
-bash scripts/00_preflight.sh
+bash scripts/00_setup.sh
 bash scripts/01_fetch_genotypes.sh
 bash scripts/02_build_phenotype.sh
 bash scripts/03_explore_phenotype.sh
@@ -35,7 +35,8 @@ bash scripts/05_pgi_regression.sh
 bash scripts/06_save_run.sh
 ```
 
-When you finish, pause the app (Apps tab -> your app -> Pause).
+When you finish, stop the app (Apps tab -> your app -> Stop). Stopping keeps
+the app and its disk, so your files are there when you start it again.
 
 ## Folders
 
@@ -79,16 +80,20 @@ each archived run names the code that produced it.
 
 ## Where the genotypes come from
 
-All of Us publishes whole-genome genotypes (the "ACAF threshold" callset) as
-one PLINK file set per chromosome under
-`gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/acaf_threshold/plink_bed/`.
-The chromosome-22 `.bed` is about 250 GB, and All of Us publishes no HapMap3
-subset. Before class the instructor ran `scripts/prep/make_hm3_subset.sh`,
-which keeps the HapMap3 variants on one chromosome (about 2 GB), renames
-variants from `chr22:pos:ref:alt` to rsIDs, and writes
-`$WORKSHOP_BUCKET/genotypes/chr22_hm3.{bed,bim,fam}`. To build another
-chromosome, run the same script with `CHROM` set (it needs a VM with about
-300 GB of free disk).
+Every genotype in this lab is All of Us v9 data. All of Us publishes
+whole-genome genotypes (the "ACAF threshold" callset) as one file set per
+chromosome, in PLINK 2 (`.../acaf_threshold/pgen/`) and PLINK 1
+(`.../acaf_threshold/plink_bed/`) formats under
+`gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/`. It does not
+publish a HapMap3 subset, and the chromosome-22 `.bed` alone is about 250 GB.
+
+Before class the instructor ran `scripts/prep/make_hm3_subset.sh`. It reads
+All of Us's chromosome-22 files, keeps the variants on a public HapMap3
+list (rsID, GRCh38 position, alleles; no participant data), renames them
+from `chr22:pos:ref:alt` to rsIDs, and writes
+`$WORKSHOP_BUCKET/genotypes/chr22_hm3.{bed,bim,fam}` (about 2 GB). To build
+another chromosome, run the same script with `CHROM` set, on a VM with a
+large disk (500 GB) and autostop set longer than the job.
 
 ## Other phenotypes
 
