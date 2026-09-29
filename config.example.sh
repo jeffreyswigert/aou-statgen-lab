@@ -3,7 +3,7 @@
 #
 # Do this once, at the start of the lab:
 #     cp config.example.sh config.sh
-#     nano config.sh          # fill in the three "FILL ME" values
+#     nano config.sh          # fill in the two "FILL ME" values
 #
 # Why two files? config.sh will contain values specific to YOUR workspace,
 # and it is listed in .gitignore so it can never be committed to GitHub by
@@ -21,17 +21,22 @@
 # screen in the save step BLOCK on problems instead of just warning.
 export DATA_MODE=aou
 
-# ---- FILL ME: three values from your workspace (instructor projects them) --
+# ---- FILL ME: two values from the workshop workspace (instructor projects them)
 
-# The cloud storage bucket this workspace may write to (starts with gs://).
+# The workshop workspace's cloud storage bucket (starts with gs://). The
+# instructor put today's genotype subset and PGI weights here, and your
+# saved run goes here too.
 export WORKSHOP_BUCKET="${WORKSHOP_BUCKET:-}"
 
-# The Google Cloud project that pays for queries and downloads.
+# The Google Cloud project that pays for queries and copies.
 export BILLING_PROJECT="${BILLING_PROJECT:-}"
 
-# The Curated Data Repository's BigQuery address, written project.dataset --
-# this is the database the phenotype query reads.
-export CDR_DATASET="${CDR_DATASET:-}"
+# ---- Set for v9; change only for a different CDR release -------------------
+
+# The Curated Data Repository (CDR) in BigQuery, written project.dataset.
+# This is the database the phenotype query reads. C2025Q4R6 is the v9
+# Controlled Tier release.
+export CDR_DATASET="${CDR_DATASET:-wb-silky-artichoke-2408.C2025Q4R6}"
 
 # ---- Usually left alone ----------------------------------------------------
 
@@ -49,19 +54,19 @@ export MEMORY_MB=1024
 # keeps the download and the scoring fast. (Real studies use all 22.)
 export CHROM="${CHROM:-22}"
 
-# Where the genotype files live: HapMap3-filtered PLINK filesets shared by
-# SSGAC, one file trio per chromosome.
-export GENO_SRC="${GENO_SRC:-gs://ssgac-shared-genotype-resources-2026/hm3_filtered_plink1}"
+# Where the genotype files live: the instructor's HapMap3 subset of All of
+# Us's chromosome files (made with scripts/prep/make_hm3_subset.sh), in
+# the workshop bucket as chr22_hm3.bed/.bim/.fam.
+export GENO_SRC="${GENO_SRC:-${WORKSHOP_BUCKET:+${WORKSHOP_BUCKET%/}/genotypes}}"
 
 # All of Us's genetic-ancestry predictions (used for figure groups and the
 # regression's PCs). This bucket is "requester pays": downloads from it must
 # name a billing project, which our fetch script handles.
 export ANC_SRC="${ANC_SRC:-gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv}"
 
-# The PGI weight file: GWAS summary statistics posted to the shared USC pod
-# bucket, converted to three columns (rsid, effect_allele, weight). The
-# default guesses a standard spot inside WORKSHOP_BUCKET; your instructor
-# may give you a different gs:// address to paste here.
+# The PGI weight file: published height GWAS summary statistics, converted
+# by the instructor to three columns (rsid, effect_allele, weight) and put
+# in the workshop bucket.
 export WEIGHTS_URI="${WEIGHTS_URI:-${WORKSHOP_BUCKET:+$WORKSHOP_BUCKET/pgi_workshop/height_weights.txt}}"
 
 # Which phenotype to build. Options live in data/phenotypes.tsv, one row

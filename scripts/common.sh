@@ -43,9 +43,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 }
 source config.sh
 
-# Make sure a results/ folder exists for outputs. (-p means "and do nothing
-# if it already exists".)
-mkdir -p results
+# Two output folders, kept apart on purpose:
+#   work/     PERSON-LEVEL files (one row per participant). These stay in
+#             the workspace. Never download them.
+#   results/  AGGREGATE outputs only (summary tables, figures). These are
+#             the only files that may be downloaded, after the disclosure
+#             check in step 06 passes and you have reviewed them.
+# (-p means "and do nothing if the folder already exists".)
+mkdir -p work results
 
 # Define a tiny helper FUNCTION named p2. From now on, writing
 #     p2 --some --flags

@@ -4,7 +4,7 @@
 Run by 03_explore_phenotype.sh. Works for whichever phenotype step 02
 built (it reads results/pheno_meta.txt to learn the variable's name).
 
-Writes to results/:
+Reads work/aou_pheno.tsv (person-level). Writes AGGREGATE outputs to results/:
   aou_pheno_summary.txt    the tables described below
   aou_pheno_hist.png       a histogram
   aou_pheno_kde_sex.png    smooth density curves, one per sex
@@ -25,7 +25,7 @@ THE TABLES -- shaped like Stata on purpose, since many of you live there:
     scores 3).
 
 What to actually LOOK for: a plausible center and spread for the variable
-(the handout gives reference ranges); spikes or a second bump, which
+(height, US adults: about 176 cm men, 162 cm women); spikes or a second bump, which
 usually mean a construction problem upstream (mixed units, duplicated
 records), not a discovery; and whether the two sex curves are shifted
 copies -- which is why height standardizes within sex.
@@ -37,14 +37,14 @@ matplotlib.use('Agg')                   # "no screen here -- draw to files"
 import matplotlib.pyplot as plt
 
 # Which phenotype is this? Step 02 wrote a small key=value file.
-meta = dict(l.split('=', 1) for l in Path('results/pheno_meta.txt').read_text().splitlines())
+meta = dict(l.split('=', 1) for l in Path('work/pheno_meta.txt').read_text().splitlines())
 label = meta.get('label', 'value')
 unit = meta.get('unit', '')
 name = f'{label} ({unit})' if unit else label
 
 # Read the phenotype table. Row layout (from step 02):
 #   person_id  value  value_z  age  sex
-rows = [l.split('\t') for l in Path('results/aou_pheno.tsv').read_text().splitlines()[1:]]
+rows = [l.split('\t') for l in Path('work/aou_pheno.tsv').read_text().splitlines()[1:]]
 v = np.array([float(r[1]) for r in rows])            # all values, one array
 sex = np.array([r[4] for r in rows])                 # matching sex labels
 age = np.array([float(r[3]) if r[3] else np.nan for r in rows])  # nan = missing
@@ -64,7 +64,7 @@ bar = '-' * 14 + '+' + '-' * (len(hdr) - 15)
 out = [f'Phenotype exploration: {name} -- aggregates only; the person-level file stays in the workspace',
        '', "Summary (Stata `summarize`-style; Obs rounded to the nearest 100, and",
        "percentiles shown where Stata prints Min/Max -- an extreme is one person's value):",
-       '', hdr, bar, sum_row(label[:13], v)]
+       '', hdr, bar, sum_row(meta.get('id', 'value')[:13], v)]
 for s in ('Male', 'Female', 'other'):
     m = sex == s
     out.append(sum_row(s, v[m]) if m.sum() > 20 else
@@ -84,15 +84,14 @@ out += [f'{p:>10}%  {val:>12.1f}' for p, val in pairs]
 out += ['', f'{"Variance":>12}  {v.var(ddof=1):>12.2f}',
         f'{"Skewness":>12}  {np.mean(z**3):>12.2f}',
         f'{"Kurtosis":>12}  {np.mean(z**4):>12.2f}',
-        '', 'Questions worth a minute: are the group means plausible (the handout has',
-        'reference ranges)? Is the SD? Would a spike or second bump implicate a',
-        'concept or unit choice upstream?']
+        '', 'Checks: is each mean in the expected range for this variable, and is',
+        'the SD? (Height, US adults: about 176 cm men, 162 cm women; SD 7-8 cm.)',
+        'A spike or a second hump usually means mixed units or a wrong concept ID.']
 Path('results/aou_pheno_summary.txt').write_text('\n'.join(out) + '\n')
 print('\n'.join(out))
 
 # --- Figure 1: histogram. Chop the range into 60 equal "bins" and draw a
-# bar showing how many people land in each. Simple and honest -- but the
-# bin count is a choice (see TRY IT below).
+# bar showing how many people land in each. The bin count is a choice (see TRY IT below).
 fig, ax = plt.subplots(figsize=(7, 4.5))
 ax.hist(v, bins=60, color='#990000', alpha=0.8)
 ax.set_xlabel(name); ax.set_ylabel('people')

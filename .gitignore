@@ -1,9 +1,14 @@
 # Your filled settings -- never committed (real workspace values stay local).
 config.sh
 # Downloaded real data and everything derived from it -- never committed.
+# work/ holds person-level files; results/ holds aggregate outputs, which
+# are reviewed before any download and are not committed either.
 lab_data/
+work/
 results/
 runs/
+# Jupyter autosave copies (they can hold cell outputs).
+.ipynb_checkpoints/
 # A locally staged PLINK build, if any.
 tools/
 # Python bytecode cache.

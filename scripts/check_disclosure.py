@@ -3,9 +3,11 @@
 
 The policy prohibits disseminating any participant count of 1 to 20 (0 is
 permitted), including counts that can be DERIVED from other reported numbers
-(e.g., two rows of a QC funnel whose difference is 1..20). This screen:
+(e.g., two rows of a sample-count table whose difference is 1..20). This screen:
 
-  A. lists participant-level files (ID columns) that must stay in the workspace,
+  A. finds participant-level files (a person-ID column). In this lab
+     results/ is for aggregate outputs only, so any such file in results/
+     is itself a finding: it belongs in work/ and must never be downloaded,
   B. flags participant-count cells of 1..20 in small summary tables,
   C. flags pairs of counts in the same column whose difference is 1..20.
 
@@ -44,8 +46,9 @@ for path in sorted(RESULTS.iterdir()):
     header = [c.lstrip('#') for c in lines[0]]
     if any(ID_COLS.match(c) for c in lines[0]):
         participant_level.append(path.name)
+        findings.append(f'{path.name}: participant-level file in results/ (move it to work/)')
         continue
-    if len(lines) > 51:      # funnels and summaries only; big per-variant files
+    if len(lines) > 51:      # small summary tables only; big per-variant files
         continue             # carry no small-table participant counts to screen
     for j, col in enumerate(header):
         if not COUNT_COLS.search(col):
@@ -63,15 +66,15 @@ for path in sorted(RESULTS.iterdir()):
                 findings.append(f'{path.name}: {col} rows {i1},{i2} differ by {d} (derivable count 1-20)')
 
 report = ['Disclosure screen (AoU Data and Statistics Dissemination Policy)', '']
-report += ['Participant-level files -- keep inside the workspace, never disseminate:']
+report += ['Participant-level files found here (results/ should have none):']
 report += [f'  {n}' for n in participant_level] or ['  none found']
-report += ['', 'Small-count findings -- suppress, collapse, or coarsen before dissemination:']
+report += ['', 'Findings (in AoU mode the save stops on any of these; round, combine, remove, or move the file):']
 report += [f'  {f}' for f in findings] or ['  none found']
 report += ['', 'Free text, figures, and percentages still require manual review.']
 (RESULTS / 'disclosure_report.txt').write_text('\n'.join(report) + '\n')
 print('\n'.join(report))
 
 if findings and os.environ.get('DATA_MODE') == 'aou' and os.environ.get('DISCLOSURE_ACK') != '1':
-    print('\nBLOCKED: small-count findings in AoU mode. Fix the tables, or re-run '
+    print('\nBLOCKED: findings in AoU mode. Fix the tables, or re-run '
           'with DISCLOSURE_ACK=1 after a documented manual review.', file=sys.stderr)
     sys.exit(1)

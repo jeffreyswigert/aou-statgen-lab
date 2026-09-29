@@ -4,7 +4,12 @@
 Run by 05_pgi_regression.sh.
 
 THE MODEL
-    phenotype_z = a + b*PGI + c*age + d*female + (five PC terms) + noise
+    phenotype_z = a + b*PGI_z + c*age + d*female + (five PC terms) + noise
+
+Both the outcome and the PGI are STANDARDIZED (mean 0, SD 1):
+    phenotype_z = (value - mean) / SD     done in step 02 (within sex for
+                                          height and weight)
+    PGI_z       = (PGI - mean) / SD       done below, over the analysis rows
 
 (The outcome is whichever phenotype step 02 built -- height by default;
 the printout names it. If you switched PHENO to another variable, remember
@@ -14,12 +19,12 @@ association -- the output will say so.)
 Regression, in one paragraph: we assume each person's height is roughly a
 weighted mix of their predictors plus random noise, and we ask "which
 weights (coefficients) make that assumption fit the data best?" The
-computer solves that directly; the science is in choosing the predictors
-and reading the answer honestly.
+computer solves that directly; our choices are which predictors to
+include and how to read the result.
 
 Where each predictor comes from, and why it is in the model:
-  PGI       from step 04, standardized here to mean 0 / SD 1 -- so the
-            headline coefficient b reads "SDs of outcome per SD of PGI".
+  PGI_z     the step-04 score, standardized here to mean 0 / SD 1 -- so
+            the coefficient b reads "SDs of outcome per SD of PGI".
   age, sex  from the phenotype file. Basic demographics; where the
             outcome was standardized within sex (height, weight),
             'female' mops up any remainder.
@@ -42,7 +47,7 @@ WHAT WE REPORT
     PGI ADDS beyond the ordinary covariates. Report this one; the PGI's
     R2 alone flatters it, because the PGI overlaps with the PCs.
 
-HONEST LABELS (printed with the results)
+WHAT THE RESULT IS AND IS NOT (printed with the results)
   Association, not cause. One chromosome, not a full index. And plain OLS
   assumes unrelated people -- with relatives in the sample, a real study
   needs family-aware methods.
@@ -66,13 +71,13 @@ def read_keyed(path):
     return h, [l.split('\t') for l in lines[1:] if l.strip()]
 
 # The same three files as step 04, joined the same safe way: by ID value.
-sh, srows = read_keyed('results/aou_pgi.sscore')
-score = {r[0]: float(r[sh.index('SCORE1_SUM')]) for r in srows}
-ph, prows = read_keyed('results/aou_pheno.tsv')
+sh, srows = read_keyed('work/aou_pgi.sscore')
+score = {r[sh.index('IID')]: float(r[sh.index('SCORE1_SUM')]) for r in srows}   # IID, not FID (=0)
+ph, prows = read_keyed('work/aou_pheno.tsv')
 pheno = {r[0]: r for r in prows}
 ah, arows = read_keyed('lab_data/ancestry_preds.tsv')
 ai = ah.index('pca_features')
-meta = dict(l.split('=', 1) for l in Path('results/pheno_meta.txt').read_text().splitlines())
+meta = dict(l.split('=', 1) for l in Path('work/pheno_meta.txt').read_text().splitlines())
 label = meta.get('label', 'phenotype')
 # Unpack the bracketed PC string: strip the [ ], split on commas, keep the
 # first five numbers.
@@ -96,7 +101,7 @@ for iid in sorted(set(score) & set(pheno) & set(pcs)):
 
 y = np.array([r[0] for r in rows])         # the outcome column
 X = np.array([r[1:] for r in rows])        # the predictor columns
-X[:, 0] = (X[:, 0] - X[:, 0].mean()) / X[:, 0].std()   # standardize the PGI
+X[:, 0] = (X[:, 0] - X[:, 0].mean()) / X[:, 0].std()   # PGI -> PGI_z (mean 0, SD 1)
 n = len(y)
 
 def fit(Xs):
@@ -116,8 +121,8 @@ beta, se, r2_full = fit(X)          # the full model
 _, _, r2_cov = fit(X[:, 1:])        # covariates only (PGI column removed)
 
 rounded = lambda m: '<=20 (suppressed)' if 1 <= m <= 20 else f'~{round(m, -2):,}'
-names = ['(intercept)', 'PGI'] + COVARS
-out = [f'Regression: {label} (z) ~ PGI + age + female + PC1..PC5  (real data; classroom estimate)',
+names = ['(intercept)', 'PGI_z'] + COVARS
+out = [f'Regression: {label} (z) ~ PGI_z + age + female + PC1..PC5  (real data; classroom estimate)',
        f'Analysis N: {rounded(n)}   (rows dropped for missing age/sex or non-M/F: {rounded(n_dropped)})', '',
        f"{'term':<12}{'estimate':>10}{'SE':>9}{'t':>8}"]
 out += [f'{nm:<12}{b:>10.4f}{s:>9.4f}{b / s:>8.2f}' for nm, b, s in zip(names, beta, se)]

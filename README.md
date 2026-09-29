@@ -1,28 +1,31 @@
-# Statistical genetics on All of Us: hands-on with your Workbench
+# Statistical genetics on All of Us: Lab 1
 
-Materials for a one-hour lab run entirely on **real All of Us v9 data**
-(Controlled Tier required): 20 minutes of instruction, then 40 hands-on
-minutes in which you
+A one-hour, step-by-step lab on **All of Us v9 Controlled Tier data**
+(Controlled Tier access required). Each step is one script:
 
-1. **explore** a real variable — Stata-style `summarize` and
-   `summarize, detail` tables, histograms, and densities,
-2. **construct a phenotype** from raw CDR records — QC'd,
-   plausibility-bounded, one row per person,
-3. **build a PGI** with PLINK on a single chromosome, from GWAS summary
-   statistics posted to the shared USC pod bucket, and
-4. **run a basic regression** that incorporates the PGI.
+| Step | What it does | Script |
+|---|---|---|
+| 0 | Check tools and settings | `scripts/00_preflight.sh` |
+| 1 | Copy chromosome-22 genotypes (HapMap3 variants) and the ancestry file to the VM | `scripts/01_fetch_genotypes.sh` |
+| 2 | Build a height phenotype from the CDR (BigQuery), one row per person | `scripts/02_build_phenotype.sh` |
+| 3 | Summary table (Stata `summarize` layout) and two figures | `scripts/03_explore_phenotype.sh` |
+| 4 | Build a polygenic index (PGI) with PLINK; histogram of the standardized PGI | `scripts/04_build_pgi.sh` |
+| 5 | Regress standardized height on the standardized PGI, age, sex, and 5 PCs | `scripts/05_pgi_regression.sh` |
+| 6 | Check `results/`, write a manifest, archive the run to the workspace bucket | `scripts/06_save_run.sh` |
 
-The deliverable is confidence with your *actual* Workbench: real queries,
-real files, real conventions, real rules.
+`slides.pdf` is the deck (each step: what it does, then the commands and
+code). `cheatsheet.pdf` lists terminal, BigQuery, cloud storage, PLINK, and
+git commands for your own projects.
 
-## Quick start (on your AoU Workbench VM)
+## Quick start (on your All of Us Workbench VM)
 
-Open a Terminal from the JupyterLab Launcher, then:
+Create a JupyterLab app (standard VM, 4 CPUs / 16 GB, 100 GB disk, autostop
+1 hour), open a Terminal from the Launcher, then:
 
 ```bash
 git clone https://github.com/jeffreyswigert/aou-statgen-lab.git
 cd aou-statgen-lab
-cp config.example.sh config.sh     # then fill the values your instructor projects
+cp config.example.sh config.sh     # then fill WORKSHOP_BUCKET and BILLING_PROJECT
 bash scripts/00_preflight.sh
 bash scripts/01_fetch_genotypes.sh
 bash scripts/02_build_phenotype.sh
@@ -32,76 +35,83 @@ bash scripts/05_pgi_regression.sh
 bash scripts/06_save_run.sh
 ```
 
-Follow along in `handout.pdf`; `slides.pdf` is the deck. There is **no
-answer key** — your numbers are real; the handout gives plausibility checks
-instead. Figures land in `results/` as PNGs; open them from the JupyterLab
-file browser.
+When you finish, pause the app (Apps tab -> your app -> Pause).
 
-## Reading the code IS the lab
+## Folders
 
-The scripts are written for people who have seen very little code. Every
-step carries a comment explaining not just *what* it does but *why* —
-which alleles get counted, why the median, why counts print rounded, why a
-failed match is silent and how we catch it. Read each script before you
-run it (`less scripts/02_build_phenotype.sh`, press `q` to exit), and try
-the **TRY IT** experiment at the bottom of each one. Start with
-`scripts/common.sh` — it explains the shell basics every other file uses.
+| Folder | Contents | Leaves the Workbench? |
+|---|---|---|
+| `lab_data/` | copied-in genotypes, ancestry file, PGI weights | No |
+| `work/` | person-level files: query results, phenotype, PGI scores | No |
+| `results/` | summary tables and figures (aggregate only) | Yes, after step 6's check passes and you review each file |
+| `runs/` | archive of each run (a copy goes to the workspace bucket) | No |
 
-## Ground rules, baked into the scripts
+All four folders are listed in `.gitignore`, so git never commits them.
 
-- **Person-level files never leave the workspace.** Downloaded data and
-  results are git-ignored; the save archive goes only to your workspace
-  bucket.
-- **Printed outputs are aggregate and screened**: counts round to the
-  nearest 100, counts of 1–20 are suppressed, and the save step runs a
-  disclosure screen (`scripts/check_disclosure.py`) that **blocks** on
-  findings — overriding is an explicit, recorded decision, never an
-  accident.
-- **Every query is byte-capped** (~$0.16 each at the default).
-- **Stop your cloud app when done.** VMs bill while idle.
+## Data use rules, and how the code follows them
 
-## GitHub in the All of Us flow
+- **Participant-level data stays in the Workbench** (All of Us Data User
+  Code of Conduct). Person-level files are written only to `lab_data/` and
+  `work/`.
+- **No participant count of 1–20 may be shared**, directly or by
+  calculation (Data and Statistics Dissemination Policy). Printed counts are
+  rounded to the nearest 100 and counts of 1–20 print as `<=20`. Step 6 runs
+  `scripts/check_disclosure.py` on `results/` and stops if it finds a count
+  of 1–20, a pair of counts that differ by 1–20, or a person-level file.
+  Figures and free text are not checked; review them yourself.
+- **Downloads are monitored** (Egress Alert Policy). Download only files in
+  `results/`: JupyterLab file browser -> right-click -> Download.
+- **Code on GitHub may not contain participant data or counts under 20**,
+  including in notebook outputs (Researcher FAQ).
 
-This repo is itself the demonstration: code is developed and versioned
-*outside* the Controlled Tier perimeter, then `git clone`d onto the
-Workbench VM (public repos need no credentials there) and updated with
-`git pull`. Code crosses the boundary freely, in both directions; **data
-never does**. Version code, config *templates*, and docs; never commit
-person-level files, results, filled configs (`config.sh` is git-ignored on
-purpose), or notebooks with outputs — a saved `.ipynb` embeds its cell
-outputs. Treat `.gitignore` as a compliance tool. The save step records
-this repo's commit hash in every run manifest (`code_version=`, with a
-`-dirty` flag for uncommitted edits), so each archived run names the exact
-code that produced it.
+Policy texts: support.researchallofus.org (Policies). `cheatsheet.pdf`
+lists the article numbers.
 
-## Swap in another phenotype
+## GitHub in this workflow
 
-The whole pipeline is a one-variable switch. `data/phenotypes.tsv` holds a
-menu of vetted numeric phenotypes — program measurements (height, weight,
-systolic BP) and EHR labs (LDL, HDL) — each row carrying its concept IDs,
-plausibility bounds, unit, standardization rule, and the caveat its source
-type is known for.
+Code is written and versioned outside the Workbench, cloned onto the VM with
+`git clone`, and updated with `git pull`. The repository holds code, the
+settings template (`config.example.sh`), and documentation. It never holds
+data, results, the filled-in `config.sh`, or notebook outputs. Step 6 writes
+the repository's commit ID into `results/run_manifest.txt`
+(`code_version=`, with `-dirty` if files were edited after the commit), so
+each archived run names the code that produced it.
+
+## Where the genotypes come from
+
+All of Us publishes whole-genome genotypes (the "ACAF threshold" callset) as
+one PLINK file set per chromosome under
+`gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/acaf_threshold/plink_bed/`.
+The chromosome-22 `.bed` is about 250 GB, and All of Us publishes no HapMap3
+subset. Before class the instructor ran `scripts/prep/make_hm3_subset.sh`,
+which keeps the HapMap3 variants on one chromosome (about 2 GB), renames
+variants from `chr22:pos:ref:alt` to rsIDs, and writes
+`$WORKSHOP_BUCKET/genotypes/chr22_hm3.{bed,bim,fam}`. To build another
+chromosome, run the same script with `CHROM` set (it needs a VM with about
+300 GB of free disk).
+
+## Other phenotypes
+
+`data/phenotypes.tsv` lists numeric phenotypes with their concept IDs,
+plausibility bounds, units, and standardization rule: height, weight,
+systolic blood pressure, LDL, HDL.
 
 ```bash
-bash scripts/02_build_phenotype.sh list     # see the menu
+bash scripts/02_build_phenotype.sh list     # the list
 PHENO=ldl bash scripts/02_build_phenotype.sh
-bash scripts/03_explore_phenotype.sh        # tables/figures follow the switch
+bash scripts/03_explore_phenotype.sh        # tables and figures follow the choice
 bash scripts/05_pgi_regression.sh           # so does the regression
 ```
 
-`DRY_RUN=1` on step 02 prints the SQL a choice would run, without spending
-a query. To add your own variable: find its concept ID in the public
-[Data Browser](https://databrowser.researchallofus.org), append a row to
-the menu, and check the resolved output carefully — a concept ID is a
-claim until the data confirm it. (The posted PGI weights are for height,
-so with another phenotype step 05 becomes a cross-trait regression — the
-output says so.)
+`DRY_RUN=1` on step 02 prints the SQL without running a query. To add a
+variable, find its concept ID in the public
+[Data Browser](https://databrowser.researchallofus.org) and add a row.
+The PGI weights are for height, so with another phenotype the step-05
+regression is cross-trait; the output says so.
 
-## After the lab
+## Scope
 
-These scripts demonstrate a workflow, not a complete analysis protocol:
-ordinary regression does not account for relatives, five PCs are a
-convention rather than a guarantee, and a one-chromosome PGI is
-deliberately partial. To scale up: set `SAMPLE_MOD=1` for the full cohort,
-loop `CHROM` over 1–22 and sum the `.sscore` SUM columns, and swap in your
-own trait's concept ID and weights.
+The regression is ordinary least squares on a 1-in-10 sample and one
+chromosome; OLS treats participants as unrelated. To extend: `SAMPLE_MOD=1`
+for everyone; build the HapMap3 subset for chromosomes 1–22, score each, and
+add the per-person `SCORE1_SUM` columns; use weights for your own trait.

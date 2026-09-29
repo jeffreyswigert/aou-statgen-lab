@@ -32,7 +32,7 @@ python3 -c 'import numpy, matplotlib' 2>/dev/null \
 command -v gcloud >/dev/null && echo 'gcloud available' || echo 'gcloud missing: cloud fetches need the AoU VM.'
 command -v bq >/dev/null && echo 'bq available' || echo 'bq missing: the phenotype query needs the AoU VM.'
 
-# Were the three FILL ME values actually filled? ":?" means "stop with this
+# Were the FILL ME values actually filled? ":?" means "stop with this
 # message if the variable is empty" -- catching a skipped config edit now.
 : "${WORKSHOP_BUCKET:?Fill WORKSHOP_BUCKET in config.sh}"
 : "${BILLING_PROJECT:?Fill BILLING_PROJECT in config.sh}"

@@ -9,6 +9,6 @@
 # in scripts/pgi_regression.py -- this wrapper only checks prerequisites.
 # =============================================================================
 source "$(dirname "$0")/common.sh"
-[[ -s results/aou_pgi.sscore ]] || { echo 'No PGI yet. Run: bash scripts/04_build_pgi.sh' >&2; exit 1; }
-[[ -s results/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
+[[ -s work/aou_pgi.sscore ]] || { echo 'No PGI yet. Run: bash scripts/04_build_pgi.sh' >&2; exit 1; }
+[[ -s work/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
 python3 scripts/pgi_regression.py

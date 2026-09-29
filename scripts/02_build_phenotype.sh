@@ -87,9 +87,9 @@ run_bq() {
 }
 
 echo "Query 1: $PHENO measurements, 1 person in ${SAMPLE_MOD} ..."
-run_bq results/raw_pheno.csv "$Q1"
+run_bq work/raw_pheno.csv "$Q1"
 echo 'Query 2: year of birth and sex at birth ...'
-run_bq results/raw_person.csv "$Q2"
+run_bq work/raw_person.csv "$Q2"
 
 # Now the cleaning: many rows per person -> one defensible row per person.
 python3 scripts/build_pheno.py

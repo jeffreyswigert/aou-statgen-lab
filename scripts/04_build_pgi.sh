@@ -6,18 +6,19 @@
 # genetic variants, multiply the person's allele count (0, 1, or 2 copies)
 # at each variant by that variant's WEIGHT, and add it all up. One number
 # per person. The weights come from someone else's large "discovery" study
-# (GWAS summary statistics) -- for this lab, posted to our shared USC pod
-# bucket.
+# (GWAS summary statistics). For this lab the instructor converted a
+# published height GWAS into a weight file and put it in the workshop
+# bucket; WEIGHTS_URI in config.sh points at it.
 #
-# PLINK does the arithmetic. Our job is the honest bookkeeping around it:
-# fetch the weights, tell PLINK exactly which column is which, and then
-# READ THE MATCH COUNT -- how many weight rows actually found their variant
-# in our data. Rows that don't match don't error; they silently sit out.
-# Counting is how you notice.
+# PLINK does the arithmetic. This script does three things around it:
+# fetches the weights, tells PLINK which column is which, and prints the
+# MATCH COUNT -- how many weight rows found their variant in our data.
+# Weight rows that match no variant do not cause an error; PLINK skips
+# them. The match count is the only place that shows up.
 # =============================================================================
 source "$(dirname "$0")/common.sh"
-[[ -s "lab_data/chr${CHROM}_filtered.bed" ]] || { echo 'No genotypes yet. Run: bash scripts/01_fetch_genotypes.sh' >&2; exit 1; }
-[[ -s results/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
+[[ -s "lab_data/chr${CHROM}_hm3.bed" ]] || { echo 'No genotypes yet. Run: bash scripts/01_fetch_genotypes.sh' >&2; exit 1; }
+[[ -s work/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
 
 # --- Get the weight file ----------------------------------------------------
 # Expected format: a header line, then three columns per row:
@@ -34,7 +35,7 @@ if [[ ! -s "$weights" ]]; then
     echo 'DEMO_WEIGHTS=1: fabricating STUB weights (plumbing test only -- results are noise).'
     awk 'BEGIN{print "rsid\teffect_allele\tweight"; srand(20260921)}
          {printf "%s\t%s\t%.5f\n", $2, $5, (rand()-0.5)/50}' \
-        "lab_data/chr${CHROM}_filtered.bim" > "$weights"
+        "lab_data/chr${CHROM}_hm3.bim" > "$weights"
   elif [[ -n "${WEIGHTS_URI:-}" ]]; then
     gflags=(); [[ -z "${BILLING_PROJECT:-}" ]] || gflags=(--billing-project="$BILLING_PROJECT")
     gcloud "${gflags[@]}" storage cp "$WEIGHTS_URI" "$weights" \
@@ -57,23 +58,24 @@ head -n 2 "$weights"     # always look at a file before using it
 #   cols=+scoresums       also report each person's raw SUM
 #   list-variants         write the exact list of variants used (kept as
 #                         provenance: proof of what went into the score)
-#   --out results/aou_pgi outputs: .sscore (the scores), .log, .sscore.vars
-p2 --bfile "lab_data/chr${CHROM}_filtered" \
+#   --out work/aou_pgi    outputs: .sscore (one score per person, so it goes
+#                         in work/), .log, .sscore.vars
+p2 --bfile "lab_data/chr${CHROM}_hm3" \
   --score "$weights" 1 2 3 header cols=+scoresums list-variants \
-  --out results/aou_pgi
+  --out work/aou_pgi
 
 # The match count -- read it every time. "processed" = weight rows that
 # found their variant; "skipped" = rows that matched nothing (wrong name
 # scheme, or variants our file doesn't carry). grep pulls those lines out
 # of the log for you.
-grep -E 'variants processed|skipped' results/aou_pgi.log || true
+grep -E 'variants processed|skipped' work/aou_pgi.log || true
 
 # One quiet PLINK default worth knowing: if a person's genotype is MISSING
 # at some variant, PLINK fills in the average allele count instead of
 # skipping. Reasonable at low missingness -- but it is a choice, and
 # published work states it.
 
-# Make the summary table and the ancestry figure for the score.
+# QC on the PGI: a summary table and a histogram of the standardized score.
 python3 scripts/pgi_eda.py
 
 printf 'Next: bash scripts/05_pgi_regression.sh\n'

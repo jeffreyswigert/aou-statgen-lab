@@ -11,5 +11,5 @@
 # scripts/pheno_eda.py -- read that file, it is the lesson.
 # =============================================================================
 source "$(dirname "$0")/common.sh"
-[[ -s results/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
+[[ -s work/aou_pheno.tsv ]] || { echo 'No phenotype yet. Run: bash scripts/02_build_phenotype.sh' >&2; exit 1; }
 python3 scripts/pheno_eda.py
