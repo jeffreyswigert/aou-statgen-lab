@@ -128,8 +128,16 @@ if [[ "$local_var" == *.zst ]]; then
 else
   mv "$local_var" "$tmp/acaf.$var_ext"
 fi
-head -n 3 "$tmp/acaf.$sample_ext"
-grep -v '^##' "$tmp/acaf.$var_ext" | head -n 3     # skip a .pvar's ## comment lines
+# Look at both files before using them, but print only what is safe to
+# show on a shared screen: the sample file's column names (its rows are
+# person IDs), and the first five columns of the first variants (a .pvar's
+# sixth column, INFO, holds allele counts, some of them small).
+# awk does the job of "grep | head" in one program: skip the ## comment
+# lines, print three lines, stop. (With "grep ... | head -n 3" on a big
+# file, head quits after three lines while grep is still writing, and
+# "set -o pipefail" in common.sh treats that as a failure.)
+head -n 1 "$tmp/acaf.$sample_ext"
+awk -F'\t' -v OFS='\t' '!/^##/ { print $1, $2, $3, $4, $5; if (++n == 3) exit }' "$tmp/acaf.$var_ext"
 
 # ---- c. and d. the lists: which variants, which names, which people --------
 # A Python script does the matching (it is easier to read than the same
