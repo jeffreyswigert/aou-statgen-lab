@@ -79,7 +79,7 @@ mkdir -p work results
 # writing
 #     p2 --bfile lab_data/chr22_hm3 --freq
 # runs
-#     plink2 --threads 2 --memory 1024 --bfile lab_data/chr22_hm3 --freq
+#     plink2 --threads 2 --memory 8192 --bfile lab_data/chr22_hm3 --freq
 # "$@" means "all the arguments given to p2, passed along unchanged".
 #
 # Why a function: PLINK's compute settings are set in ONE place (config.sh)

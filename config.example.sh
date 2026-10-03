@@ -63,11 +63,12 @@ export CDR_DATASET="${CDR_DATASET:-wb-silky-artichoke-2408.C2025Q4R6}"
 # the VM. If your instructor staged a local copy: export PLINK2=$PWD/tools/plink2
 export PLINK2="${PLINK2:-plink2}"
 
-# Compute settings for every PLINK call: 2 processor threads and 1024 MiB of
-# memory. Small on purpose -- this lab needs seconds, and polite settings
-# won't fight other work on a shared VM.
-export THREADS=2
-export MEMORY_MB=1024
+# Compute settings for every PLINK call: 2 processor threads and 8192 MiB
+# (8 GB) of memory, a modest share of the 30 GB VM. Scoring the full
+# genotype file (about 535,000 people) fails with "Out of memory" at
+# 1024 MiB.
+export THREADS="${THREADS:-2}"
+export MEMORY_MB="${MEMORY_MB:-8192}"
 
 # Which chromosome to use. 22 is one of the smallest, which keeps the copy
 # and the scoring fast. (Real studies use all 22.)
