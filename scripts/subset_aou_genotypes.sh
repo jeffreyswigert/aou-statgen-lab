@@ -67,6 +67,11 @@ ACAF_DIR="${ACAF_DIR%/}"             # %/ removes one trailing slash, if any
 if [[ "$ACAF_DIR" == gs://* ]]; then in_cloud=yes; else in_cloud=no; fi
 out_prefix="lab_data/chr${CHROM}_hm3"
 tmp=lab_data/aou_tmp                 # scratch folder for the pieces
+# Start with an empty scratch folder. Files copied from a mounted bucket
+# arrive read-only, so leftovers from an earlier run could not be
+# overwritten; rm -rf removes them (-r: the folder and its contents,
+# -f: without asking, and without complaint if it is not there).
+rm -rf "$tmp"
 mkdir -p lab_data "$tmp"
 
 # ---- The HapMap3 list ------------------------------------------------------
