@@ -26,8 +26,9 @@
 #                 the parts PLINK needs are fetched). Empty = the standard
 #                 gs:// folder for ACAF_FORMAT.
 #   HM3_LIST      a local HapMap3 variant list (rsid, chr, pos, a1, a2;
-#                 GRCh38 positions). If unset, it is copied from
-#                 HM3_LIST_URI (the workshop bucket).
+#                 GRCh38 positions). If unset, the repository's own
+#                 data/hm3_chr22_hg38.tsv is used; for a chromosome with
+#                 no list in data/, one is copied from HM3_LIST_URI.
 #   SAMPLE_MOD    keep people whose ID divides evenly by this (10 = about
 #                 1 in 10; 1 = everyone). The same rule step 02 uses for
 #                 the phenotype, so the two files cover the same people.
@@ -70,11 +71,14 @@ mkdir -p lab_data "$tmp"
 
 # ---- The HapMap3 list ------------------------------------------------------
 # Public reference data (rsID, chromosome, GRCh38 position, two alleles);
-# no participant data. If a local file was not named, copy the workshop's.
+# no participant data. The repository carries the chromosome-22 list in
+# data/ (source: README, "Where the genotypes come from"). For another
+# chromosome, name a file with HM3_LIST or a gs:// address with HM3_LIST_URI.
 if [[ -z "${HM3_LIST:-}" ]]; then
-  HM3_LIST=lab_data/hm3_hg38.tsv
+  HM3_LIST="data/hm3_chr${CHROM}_hg38.tsv"
   if [[ ! -s "$HM3_LIST" ]]; then         # -s: exists and is not empty
-    : "${HM3_LIST_URI:?Set HM3_LIST_URI in config.sh (or HM3_LIST to a local file)}"
+    HM3_LIST=lab_data/hm3_hg38.tsv
+    : "${HM3_LIST_URI:?No data/hm3_chr${CHROM}_hg38.tsv. Set HM3_LIST to a local list, or HM3_LIST_URI}"
     echo "Copying the HapMap3 list from $HM3_LIST_URI ..."
     gcloud "${gflags[@]}" storage cp "$HM3_LIST_URI" "$HM3_LIST"
   fi

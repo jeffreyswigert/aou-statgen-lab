@@ -93,8 +93,9 @@ chromosome, in PLINK 2 (`.../acaf_threshold/pgen/`) and PLINK 1
 publish a HapMap3 subset, and the chromosome-22 `.bed` alone is about 250 GB.
 
 `scripts/subset_aou_genotypes.sh` makes the subset: it reads All of Us's
-chromosome-22 files, keeps the variants on a public HapMap3 list (rsID,
-GRCh38 position, alleles; no participant data), keeps a 1-in-`SAMPLE_MOD`
+chromosome-22 files, keeps the variants on a public HapMap3 list
+(`data/hm3_chr22_hg38.tsv`: rsID, GRCh38 position, alleles; no participant
+data), keeps a 1-in-`SAMPLE_MOD`
 sample of people, and renames the variants from `chr22:pos:ref:alt` to
 rsIDs. Step 1 gets the result one of two ways, set by `GENO_SOURCE` in
 `config.sh`:
@@ -107,6 +108,14 @@ rsIDs. Step 1 gets the result one of two ways, set by `GENO_SOURCE` in
   If the Workbench has mounted the dataset under `~/workspace`, set
   `ACAF_DIR` to that folder and PLINK reads the file in place; otherwise
   the file is copied to the VM first (large disk, long autostop).
+
+The HapMap3 list is the chromosome-22 part of the variant map published
+with LDpred2: Privé, Florian (2020), "European LD reference", figshare,
+<https://doi.org/10.6084/m9.figshare.13034123.v3>, file `map.rds`, license
+CC BY 4.0. We kept the 15,414 chromosome-22 variants that have a GRCh38
+position and wrote five columns: `rsid`, `chr`, `pos` (GRCh38), `a1`, `a2`.
+For another chromosome, make the same file from `map.rds` and name it with
+`HM3_LIST`.
 
 ## Other phenotypes
 
@@ -131,6 +140,6 @@ regression is cross-trait; the output says so.
 
 The regression is ordinary least squares on a 1-in-10 sample and one
 chromosome; OLS treats participants as unrelated. To extend: `SAMPLE_MOD=1`
-for everyone; `GENO_SOURCE=aou CHROM=<n>` to build other chromosomes, score
+for everyone; `GENO_SOURCE=aou CHROM=<n> HM3_LIST=<list>` to build other chromosomes, score
 each, and add the per-person `SCORE1_SUM` columns; use weights for your own
 trait.

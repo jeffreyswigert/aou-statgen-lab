@@ -98,12 +98,13 @@ export GENO_STEM="${GENO_STEM:-chr${CHROM}_hm3}"
 #                 give that folder instead (a path, not gs://): PLINK then
 #                 reads the file in place and fetches only what it needs.
 #                 scripts/prep/check_genotype_access.sh looks for the mount.
-#   HM3_LIST_URI  the HapMap3 variant list (public reference data: rsID,
-#                 chromosome, GRCh38 position, alleles). The instructor put a
-#                 copy in the workshop bucket.
+#   HM3_LIST_URI  leave empty for chromosome 22: the HapMap3 variant list
+#                 (public reference data: rsID, chromosome, GRCh38 position,
+#                 alleles) is in this repository, data/hm3_chr22_hg38.tsv.
+#                 For another chromosome, the gs:// address of your own list.
 export ACAF_FORMAT="${ACAF_FORMAT:-pgen}"
 export ACAF_DIR="${ACAF_DIR:-}"
-export HM3_LIST_URI="${HM3_LIST_URI:-${WORKSHOP_BUCKET:+${WORKSHOP_BUCKET%/}/genotypes/hm3_hg38.tsv}}"
+export HM3_LIST_URI="${HM3_LIST_URI:-}"
 
 # All of Us's genetic-ancestry predictions (used for figure groups and the
 # regression's PCs). This bucket is "requester pays": downloads from it must
