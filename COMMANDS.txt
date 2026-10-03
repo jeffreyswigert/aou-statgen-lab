@@ -1,0 +1,194 @@
+COMMANDS.txt -- every command used in Lab 1, in order, to copy and paste from.
+================================================================================
+Lines starting with # are notes. Each command is followed by what it does and
+how it generalizes beyond this lab. This file is also online, so you can open
+it in a browser tab before you have cloned anything:
+  https://raw.githubusercontent.com/jeffreyswigert/aou-statgen-lab/main/COMMANDS.txt
+
+Conventions used below:
+  bash scripts/X.sh          run script X with bash
+  NAME=value bash ...        set a setting for this one command only
+  $NAME                      the value of a setting (variable)
+  A | B                      "pipe": send what A prints into B
+  >  FILE                    save what a command prints into FILE
+
+
+-------------------------------------------------------------------------------
+STEP 0: get the code and fill in settings   (JupyterLab Launcher -> Terminal)
+-------------------------------------------------------------------------------
+
+git clone https://github.com/jeffreyswigert/aou-statgen-lab.git
+# Copy the repository (code, docs, settings template) from GitHub onto this VM.
+# General: git clone URL  works for any repository, yours or someone else's.
+
+cd aou-statgen-lab
+# Move into the folder git just made. Every later command is typed here.
+
+cp config.example.sh config.sh
+# Make your own copy of the settings template. config.sh is listed in
+# .gitignore, so git will never upload your filled-in values.
+# General: commit a template; keep the filled copy out of git.
+
+nano config.sh
+# Open the settings file in a text editor. Fill in WORKSHOP_BUCKET and
+# BILLING_PROJECT (the instructor projects them). Ctrl-O saves, Ctrl-X exits.
+
+git check-ignore -v config.sh
+# Ask git which .gitignore line excludes config.sh. If it prints nothing, the
+# file would be committed: stop and fix .gitignore.
+
+bash scripts/00_setup.sh
+# Check tools (python3, PLINK 2, gcloud, bq), the settings, and disk space.
+# Last line should read: Setup check passed.
+# General: a check script at the top of any pipeline fails early and clearly.
+
+
+-------------------------------------------------------------------------------
+STEP 1: put the genotypes and the ancestry file on the VM
+-------------------------------------------------------------------------------
+
+bash scripts/01_fetch_genotypes.sh
+# Copies chr22_hm3.bed/.bim/.fam and ancestry_preds.tsv into lab_data/.
+# (With GENO_SOURCE=aou in config.sh it instead builds the chr22 subset from
+# All of Us's own chromosome file; see scripts/subset_aou_genotypes.sh.)
+# General: PLINK reads files on the VM's disk, so any genotype analysis
+# starts with a copy (gcloud storage cp) or a mounted bucket.
+
+head -n 2 lab_data/chr22_hm3.fam
+# First 2 lines of the sample file: one line per person. Column 1 (FID) is 0
+# for everyone in All of Us files; column 2 (IID) is the person ID.
+# General: head -n N FILE shows the first N lines of any text file.
+
+head -n 2 lab_data/chr22_hm3.bim
+# First 2 lines of the variant file: one line per variant (chromosome, ID,
+# cM, position, allele 1, allele 2). IDs here are rsIDs; positions are GRCh38.
+
+head -n 1 lab_data/ancestry_preds.tsv | tr '\t' '\n'
+# The header line only, with each tab turned into a line break, so the
+# column names read as a list. tr replaces one character with another.
+# General: this is the quickest way to learn the columns of a wide file.
+
+
+-------------------------------------------------------------------------------
+STEP 2: build the phenotype from the database (BigQuery)
+-------------------------------------------------------------------------------
+
+DRY_RUN=1 bash scripts/02_build_phenotype.sh
+# Print the two SQL queries the script would send. Runs nothing, costs nothing.
+# General: read a query before running it; bq has a --dry_run flag too.
+
+bash scripts/02_build_phenotype.sh
+# Run the two queries (measurements; year of birth and sex at birth), save
+# the answers as CSV in work/, and clean them into one row per person:
+# work/aou_pheno.tsv with columns person_id, value, value_z, age, sex.
+
+bash scripts/02_build_phenotype.sh list
+# Show the other phenotypes in data/phenotypes.tsv (weight, blood pressure,
+# LDL, HDL). Choose one with:  PHENO=ldl bash scripts/02_build_phenotype.sh
+
+
+-------------------------------------------------------------------------------
+STEP 3: look at the phenotype
+-------------------------------------------------------------------------------
+
+head -n 3 work/aou_pheno.tsv | column -t
+# The first 3 lines, with the columns lined up. Output stays on your screen.
+
+wc -l work/aou_pheno.tsv
+# Count lines: rows plus 1 header line.
+
+cut -f 5 work/aou_pheno.tsv | sort | uniq -c
+# Rows per sex: keep column 5 (cut), sort the values, count each distinct
+# value (uniq -c). The sort is required: uniq only merges adjacent lines.
+# General: cut | sort | uniq -c is the terminal's frequency table.
+
+bash scripts/03_explore_phenotype.sh
+# Write results/aou_pheno_summary.txt (a summary table) and two figures,
+# results/aou_pheno_hist.png and results/aou_pheno_kde_sex.png.
+
+cat results/aou_pheno_summary.txt
+# Print the summary table. Open the figures by double-clicking them in the
+# JupyterLab file browser (folder results/).
+
+
+-------------------------------------------------------------------------------
+STEP 4: build the polygenic index (PGI)
+-------------------------------------------------------------------------------
+
+bash scripts/04_build_pgi.sh
+# Copy the weight file, run PLINK's --score, print the match count, and write
+# results/aou_pgi_summary.txt and results/aou_pgi_hist.png.
+
+grep -E 'variants processed|skipped' work/aou_pgi.log
+# Pull the match count out of PLINK's log. "processed" = weight rows whose
+# variant was found in the genotype file. PLINK skips the rest silently.
+# General: grep PATTERN FILE prints the lines that match; -E allows the |
+# ("or") in the pattern. Read every PLINK log.
+
+wc -l < lab_data/height_weights.txt
+# The number of lines in the weight file (rows + 1 header), to compare with
+# the processed count. The < makes wc print only the number.
+
+
+-------------------------------------------------------------------------------
+STEP 5: the regression
+-------------------------------------------------------------------------------
+
+bash scripts/05_pgi_regression.sh
+# Fit height_z ~ PGI_z + age + female + PC1..PC5 by ordinary least squares
+# and write results/aou_pgi_regression.txt.
+
+cat results/aou_pgi_regression.txt
+# Print the coefficient table, the two R-squared values, and the
+# incremental R-squared.
+
+
+-------------------------------------------------------------------------------
+STEP 6: check, save, download, stop
+-------------------------------------------------------------------------------
+
+bash scripts/06_save_run.sh
+# 1. check results/ for counts of 1-20 and person-level files (stops if any);
+# 2. write results/run_manifest.txt (commit ID, settings, input checksums);
+# 3. pack config.sh, scripts/, work/, results/ into runs/<id>.tar.gz;
+# 4. copy the archive to $WORKSHOP_BUCKET/statgen-lab/ and list it.
+
+cat results/disclosure_report.txt
+# What the check looked at and found. "none found" twice is a pass.
+
+grep code_version results/run_manifest.txt
+# The git commit that produced this run ("-dirty" = edited after the commit).
+
+gcloud storage ls "$WORKSHOP_BUCKET/statgen-lab/"
+# List the archives in the bucket: confirm yours is there before stopping.
+# General: gcloud storage ls gs://BUCKET/FOLDER/ lists any bucket folder you
+# can read. Add --billing-project=$BILLING_PROJECT before "storage" for
+# requester-pays buckets such as the All of Us controlled dataset.
+
+# Download one file: JupyterLab file browser -> results/ -> right-click
+# aou_pgi_hist.png -> Download. Only files in results/, after reading them.
+
+# Stop the VM: Apps tab -> your JupyterLab app -> Stop.
+
+
+-------------------------------------------------------------------------------
+AFTER CLASS: settings that change what the steps do
+-------------------------------------------------------------------------------
+# Set in config.sh, or in front of one command:
+
+PHENO=ldl bash scripts/02_build_phenotype.sh
+# Another phenotype from the menu. Steps 3 and 5 follow the choice.
+
+SAMPLE_MOD=1 bash scripts/02_build_phenotype.sh
+# Everyone instead of 1 person in 10 (step 1 in aou mode uses the same rule).
+
+GENO_SOURCE=aou bash scripts/01_fetch_genotypes.sh
+# Build the chromosome-22 subset from All of Us's own files instead of copying
+# the ready-made one. Slower; the same output.
+
+CHROM=21 bash scripts/01_fetch_genotypes.sh
+# Another chromosome (in aou mode any chromosome works; in bucket mode its
+# subset must exist in the bucket first).
+
+DISCLOSURE_ACK=1 bash scripts/06_save_run.sh
+# Save despite a disclosure finding, after a documented manual review.

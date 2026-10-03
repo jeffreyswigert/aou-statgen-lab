@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A basic regression incorporating the PGI (the lab's capstone).
+"""A basic regression that includes the PGI.
 
 Run by 05_pgi_regression.sh.
 
@@ -10,134 +10,191 @@ Both the outcome and the PGI are STANDARDIZED (mean 0, SD 1):
     phenotype_z = (value - mean) / SD     done in step 02 (within sex for
                                           height and weight)
     PGI_z       = (PGI - mean) / SD       done below, over the analysis rows
+So the coefficient b reads "SDs of outcome per SD of PGI".
 
-(The outcome is whichever phenotype step 02 built -- height by default;
-the printout names it. If you switched PHENO to another variable, remember
-the posted weights are HEIGHT weights, so b becomes a cross-trait
-association -- the output will say so.)
+(The outcome is whichever phenotype step 02 built, height by default; the
+printout names it. With another PHENO, remember the posted weights are
+height weights, so b is a cross-trait association; the output says so.)
 
-Regression, in one paragraph: we assume each person's height is roughly a
-weighted mix of their predictors plus random noise, and we ask "which
-weights (coefficients) make that assumption fit the data best?" The
-computer solves that directly; our choices are which predictors to
-include and how to read the result.
+Regression in one paragraph: we assume each person's outcome is roughly
+a weighted sum of their predictors plus random noise, and ask which
+weights (the coefficients) fit the data best. "Best" means the smallest
+sum of squared leftovers, which is why the method is called ordinary
+least squares (OLS). The computer solves for those weights directly. Our
+choices are which predictors to include and how to read the result.
 
 Where each predictor comes from, and why it is in the model:
-  PGI_z     the step-04 score, standardized here to mean 0 / SD 1 -- so
-            the coefficient b reads "SDs of outcome per SD of PGI".
-  age, sex  from the phenotype file. Basic demographics; where the
-            outcome was standardized within sex (height, weight),
-            'female' mops up any remainder.
-  PC1..PC5  "principal components": five numbers per person that
-            summarize broad genetic ancestry patterns. Why include them?
-            Both allele frequencies AND environments differ across
-            ancestral backgrounds, and the PGI carries some of that. The
-            PCs absorb part of it so b is less contaminated by structure.
-            They come from All of Us's ancestry file -- where they are
-            stored as ONE bracketed text string per person ("[-0.009,
-            0.015, ...]") that we must split apart ourselves. Real files
-            are like this; read them before trusting them.
+  PGI_z     the step-04 score, standardized here.
+  age, sex  from the phenotype file. Basic demographics. Where the
+            outcome was standardized within sex (height, weight), the
+            'female' term picks up any remainder.
+  PC1..PC5  principal components: five numbers per person that summarize
+            broad genetic ancestry patterns. Both allele frequencies and
+            environments differ across ancestral backgrounds, and the
+            PGI carries some of that. The PCs absorb part of it, so b is
+            less contaminated by population structure. They come from
+            All of Us's ancestry file, where they are stored as ONE
+            bracketed text string per person ("[-0.009, 0.015, ...]")
+            that we split apart ourselves. Real files are like this.
 
 WHAT WE REPORT
-  * the coefficient table: each estimate with its SE (standard error --
+  * the coefficient table: each estimate with its SE (standard error,
     the estimate's uncertainty) and t (estimate / SE; roughly, |t| > 2
     means "hard to explain by chance alone").
-  * R-squared: the share of height variation the predictors explain.
-  * INCREMENTAL R-squared: R2 with the PGI minus R2 without it -- what the
-    PGI ADDS beyond the ordinary covariates. Report this one; the PGI's
-    R2 alone flatters it, because the PGI overlaps with the PCs.
+  * R-squared: the share of outcome variance the predictors explain.
+  * INCREMENTAL R-squared: R2 with the PGI minus R2 without it, which is
+    what the PGI adds beyond the ordinary covariates. Report this one;
+    the PGI's R2 on its own overstates it, because the PGI overlaps with
+    the PCs.
 
 WHAT THE RESULT IS AND IS NOT (printed with the results)
   Association, not cause. One chromosome, not a full index. And plain OLS
-  assumes unrelated people -- with relatives in the sample, a real study
-  needs family-aware methods.
+  assumes unrelated people; with relatives in the sample, a real study
+  uses family-aware methods.
 
-Printing rule: shown Ns rounded to the nearest 100; 1-20 never shown.
+About the code: the regression is solved with numpy's least-squares
+routine and the textbook formula for standard errors, written out so you
+can see every piece. In practice you would usually call a library
+(statsmodels in Python, lm() in R) and get the same
+numbers plus p-values and diagnostics.
+
+Printing rule: participant counts are rounded to the nearest hundred;
+1-20 never shown.
 
 TRY IT: in the COVARS line below, delete the five PC names and re-run
     bash scripts/05_pgi_regression.sh
-Watch the PGI coefficient move. That movement IS population structure --
+Watch the PGI coefficient move. That movement is population structure:
 the cheapest demonstration of why the PCs belong in the model.
 """
 import numpy as np
 from pathlib import Path
 
-COVARS = ['age', 'female'] + [f'PC{i}' for i in range(1, 6)]
+COVARS = ['age', 'female', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5']
+N_PCS = 5
 
-def read_keyed(path):
-    """Tab-separated table -> (column names, rows); '#' stripped off header."""
+
+def read_table(path):
+    """Tab-separated table -> (column names, list of rows). The # that
+    PLINK puts at the start of its header line is removed."""
     lines = Path(path).read_text().splitlines()
-    h = lines[0].lstrip('#').split('\t')
-    return h, [l.split('\t') for l in lines[1:] if l.strip()]
+    header = lines[0].lstrip('#').split('\t')
+    rows = []
+    for line in lines[1:]:
+        if line.strip():
+            rows.append(line.split('\t'))
+    return header, rows
 
-# The same three files as step 04, joined the same safe way: by ID value.
-sh, srows = read_keyed('work/aou_pgi.sscore')
-score = {r[sh.index('IID')]: float(r[sh.index('SCORE1_SUM')]) for r in srows}   # IID, not FID (=0)
-ph, prows = read_keyed('work/aou_pheno.tsv')
-pheno = {r[0]: r for r in prows}
-ah, arows = read_keyed('lab_data/ancestry_preds.tsv')
-ai = ah.index('pca_features')
-meta = dict(l.split('=', 1) for l in Path('work/pheno_meta.txt').read_text().splitlines())
+
+def rounded(n):
+    """A participant count as text: '<=20' for 1-20, else nearest hundred."""
+    if 1 <= n <= 20:
+        return '<=20 (suppressed)'
+    return f'~{round(n, -2):,}'
+
+
+# ---- Read the three inputs into dicts keyed by person ID --------------------
+# The same files as step 04, joined the same safe way: by ID value.
+score_header, score_rows = read_table('work/aou_pgi.sscore')
+iid_col = score_header.index('IID')             # IID, not FID (which is 0)
+sum_col = score_header.index('SCORE1_SUM')
+score = {}
+for row in score_rows:
+    score[row[iid_col]] = float(row[sum_col])
+
+pheno_header, pheno_rows = read_table('work/aou_pheno.tsv')
+pheno = {}
+for row in pheno_rows:
+    pheno[row[0]] = row                         # person_id, value, value_z, age, sex
+
+anc_header, anc_rows = read_table('lab_data/ancestry_preds.tsv')
+pca_col = anc_header.index('pca_features')
+pcs = {}
+for row in anc_rows:
+    # Unpack the bracketed PC string: remove the [ and ], split on commas,
+    # turn each piece into a number, keep the first five.
+    text = row[pca_col].strip('[]')
+    numbers = []
+    for piece in text.split(','):
+        numbers.append(float(piece))
+    pcs[row[0]] = numbers[:N_PCS]               # column 0 is research_id
+
+meta = {}
+for line in Path('work/pheno_meta.txt').read_text().splitlines():
+    key, value = line.split('=', 1)
+    meta[key] = value
 label = meta.get('label', 'phenotype')
-# Unpack the bracketed PC string: strip the [ ], split on commas, keep the
-# first five numbers.
-pcs = {r[0]: [float(x) for x in r[ai].strip('[]').split(',')[:5]] for r in arows}
 
-# Assemble the analysis rows. A person enters the model only with a
-# height_z, an age, and a recorded Male/Female (height_z was only defined
-# within those groups -- see step 02). Everyone else is dropped -- and, as
-# always, counted rather than silently discarded.
-rows, n_dropped = [], 0
-for iid in sorted(set(score) & set(pheno) & set(pcs)):
-    r = pheno[iid]                 # person_id, value, value_z, age, sex
-    if r[2] and r[3] and r[4] in ('Male', 'Female'):
-        rows.append([float(r[2]),                      # y: the phenotype's z
-                     score[iid],                       # PGI (raw, for now)
-                     float(r[3]),                      # age
-                     1.0 if r[4] == 'Female' else 0.0  # female: 1 yes, 0 no
-                     ] + pcs[iid])                     # PC1..PC5
-    else:
+# ---- Assemble the analysis rows ---------------------------------------------
+# A person enters the model only with a phenotype z, an age, and a
+# recorded Male/Female (the z was only defined within those groups; see
+# step 02). Everyone else is dropped, and counted rather than silently
+# discarded. The IDs in all three files: set intersection with &.
+y_list = []                                     # the outcome, one entry per person
+x_list = []                                     # the predictors, one list per person
+n_dropped = 0
+for pid in sorted(set(score) & set(pheno) & set(pcs)):
+    row = pheno[pid]
+    value_z, age, sex = row[2], row[3], row[4]
+    if value_z == '' or age == '' or sex not in ('Male', 'Female'):
         n_dropped += 1
+        continue
+    if sex == 'Female':
+        female = 1.0
+    else:
+        female = 0.0
+    y_list.append(float(value_z))
+    x_list.append([score[pid], float(age), female] + pcs[pid])   # PGI (raw), age, female, PC1..PC5
 
-y = np.array([r[0] for r in rows])         # the outcome column
-X = np.array([r[1:] for r in rows])        # the predictor columns
-X[:, 0] = (X[:, 0] - X[:, 0].mean()) / X[:, 0].std()   # PGI -> PGI_z (mean 0, SD 1)
+y = np.array(y_list)
+X = np.array(x_list)                            # one row per person, one column per predictor
+# Standardize the PGI column (column 0) over the analysis rows: PGI -> PGI_z.
+X[:, 0] = (X[:, 0] - X[:, 0].mean()) / X[:, 0].std()
 n = len(y)
 
-def fit(Xs):
+
+def fit(predictors):
     """Ordinary least squares with an intercept.
-    Returns (coefficients, their SEs, R-squared). np.linalg.lstsq is the
-    solver that finds the best-fitting coefficients; the SE formula is the
-    standard textbook one."""
-    M = np.column_stack([np.ones(len(y)), Xs])         # add intercept column
-    beta, *_ = np.linalg.lstsq(M, y, rcond=None)
-    resid = y - M @ beta                               # leftover noise
-    r2 = 1 - resid.var() / y.var()
-    sigma2 = resid @ resid / (len(y) - M.shape[1])
-    se = np.sqrt(np.diag(sigma2 * np.linalg.inv(M.T @ M)))
+    Returns (coefficients, their standard errors, R-squared).
+
+    M is the design matrix: a column of ones (the intercept) followed by
+    the predictor columns. np.linalg.lstsq finds the coefficients that
+    make M @ beta as close to y as possible (@ is matrix multiplication).
+    The standard errors follow the textbook formula
+        SE = sqrt( diag( sigma^2 * (M'M)^-1 ) ),
+    where sigma^2 is the residual variance."""
+    M = np.column_stack([np.ones(len(y)), predictors])
+    result = np.linalg.lstsq(M, y, rcond=None)
+    beta = result[0]                            # the coefficients (lstsq returns other things too)
+    residuals = y - M @ beta                    # what the model leaves unexplained
+    r2 = 1 - residuals.var() / y.var()
+    n_obs, n_params = M.shape
+    sigma2 = (residuals @ residuals) / (n_obs - n_params)
+    covariance = sigma2 * np.linalg.inv(M.T @ M)
+    se = np.sqrt(np.diag(covariance))
     return beta, se, r2
 
-beta, se, r2_full = fit(X)          # the full model
-_, _, r2_cov = fit(X[:, 1:])        # covariates only (PGI column removed)
 
-rounded = lambda m: '<=20 (suppressed)' if 1 <= m <= 20 else f'~{round(m, -2):,}'
+beta, se, r2_full = fit(X)                      # the full model
+_, _, r2_cov = fit(X[:, 1:])                    # covariates only: every column except the PGI
+
+# ---- Report ------------------------------------------------------------------
 names = ['(intercept)', 'PGI_z'] + COVARS
 out = [f'Regression: {label} (z) ~ PGI_z + age + female + PC1..PC5  (real data; classroom estimate)',
        f'Analysis N: {rounded(n)}   (rows dropped for missing age/sex or non-M/F: {rounded(n_dropped)})', '',
        f"{'term':<12}{'estimate':>10}{'SE':>9}{'t':>8}"]
-out += [f'{nm:<12}{b:>10.4f}{s:>9.4f}{b / s:>8.2f}' for nm, b, s in zip(names, beta, se)]
+for name, b, s in zip(names, beta, se):
+    out.append(f'{name:<12}{b:>10.4f}{s:>9.4f}{b / s:>8.2f}')
 out += ['',
         f'R2 with PGI    = {r2_full:.4f}',
         f'R2 covariates  = {r2_cov:.4f}',
         f'incremental R2 = {r2_full - r2_cov:.4f}', '',
-        'Reading the headline row: a person one SD higher in this PGI is '
-        f'{beta[1]:+.3f} SD higher',
-        f'in {label}, conditional on age, sex, and five PCs. Association, not cause;',
+        f'Reading the headline row: a person one SD higher in this PGI is {beta[1]:+.3f} SD higher',
+        f'in {label}, holding age, sex, and five PCs fixed. Association, not cause;',
         'one chromosome, not a full index; independent-samples OLS, not a family model.']
 if meta.get('id', 'height') != 'height':
     out += ['', f'NOTE: the posted weights are HEIGHT weights and the outcome is {label},',
-            'so this is a CROSS-TRAIT regression -- expect a coefficient near zero.',
-            'The mechanics are what you are practicing; a real analysis fetches',
+            'so this is a CROSS-TRAIT regression; expect a coefficient near zero.',
+            'The mechanics are what you are practicing; a real analysis gets',
             'weights for its own trait.']
 Path('results/aou_pgi_regression.txt').write_text('\n'.join(out) + '\n')
 print('\n'.join(out))

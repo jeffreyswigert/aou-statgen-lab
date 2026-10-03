@@ -5,16 +5,35 @@
 #     cp config.example.sh config.sh
 #     nano config.sh          # fill in the two "FILL ME" values
 #
+# Why a settings file at all? The scripts are the same for everyone; the
+# values below (your bucket, the billing project, the CDR release, which
+# chromosome) are what differ between people, workspaces, and runs. Keeping
+# them here, in one place, means no script ever needs editing, and a value
+# is typed once instead of in seven scripts. Every script loads this file
+# first (see scripts/common.sh).
+#
 # Why two files? config.sh will contain values specific to YOUR workspace,
 # and it is listed in .gitignore so it can never be committed to GitHub by
 # accident. The template (this file) is safe to share; your filled copy
-# stays with you. That split -- templates in the repo, real values outside
-# it -- is a habit worth keeping in your own projects.
+# stays with you.
 #
-# The pattern ${NAME:-fallback} means: "if NAME is already set (for
-# example, typed before the command), keep it; otherwise use the
-# fallback." It lets you override any single setting for one run:
-#     CHROM=21 bash scripts/01_fetch_genotypes.sh
+# In your own work: in a notebook, the same idea is a first cell of
+# settings -- every value that changes between projects, in one place,
+# never committed. A file like this one becomes useful once a project is
+# a set of scripts run in several places (a collaborator's workspace, a
+# batch job, a loop over 22 chromosomes).
+#
+# How to read each line:
+#   export NAME=value   NAME=value alone makes a variable that only this
+#                       shell can see. "export" also hands it to programs
+#                       the scripts start, such as python3. (Only DATA_MODE
+#                       is actually read that way today, by
+#                       check_disclosure.py; exporting all of them is the
+#                       usual convention and costs nothing.)
+#   ${NAME:-fallback}   "if NAME is already set (for example, typed before
+#                       the command), keep it; otherwise use the fallback."
+#                       It lets you override one setting for one run:
+#                           CHROM=21 bash scripts/01_fetch_genotypes.sh
 # =============================================================================
 
 # We are working with real All of Us data. This switch makes the disclosure
@@ -50,18 +69,41 @@ export PLINK2="${PLINK2:-plink2}"
 export THREADS=2
 export MEMORY_MB=1024
 
-# Which chromosome to download and score. 22 is one of the smallest, which
-# keeps the download and the scoring fast. (Real studies use all 22.)
+# Which chromosome to use. 22 is one of the smallest, which keeps the copy
+# and the scoring fast. (Real studies use all 22.)
 export CHROM="${CHROM:-22}"
 
-# Where the genotype files live: the instructor's HapMap3 subset of All of
-# Us's chromosome files (made with scripts/prep/make_hm3_subset.sh), in
-# the workshop bucket as chr22_hm3.bed/.bim/.fam.
+# ---- Where the genotypes come from -----------------------------------------
+# Two options; both end with lab_data/chr22_hm3.bed/.bim/.fam on the VM.
+#   bucket   copy the instructor's ready-made HapMap3 subset from the
+#            workshop bucket (three small files; 1-3 minutes).
+#   aou      build that subset yourself from All of Us's own chromosome
+#            file, the way a real project would (scripts/subset_aou_genotypes.sh).
+#            Slower; how much slower depends on whether the All of Us
+#            bucket is mounted on the VM (see ACAF_DIR below).
+export GENO_SOURCE="${GENO_SOURCE:-bucket}"
+
+# Used when GENO_SOURCE=bucket: the folder holding the subset, and the
+# file-name stem of the three files there. Step 1 saves the copies as
+# lab_data/chr${CHROM}_hm3.* whatever they are called in the bucket.
 export GENO_SRC="${GENO_SRC:-${WORKSHOP_BUCKET:+${WORKSHOP_BUCKET%/}/genotypes}}"
-# The file-name stem of the three genotype files in GENO_SRC. Whatever it
-# is there, step 1 saves the copies as lab_data/chr${CHROM}_hm3.* so every
-# later step finds them. Change it only if GENO_SRC uses other names.
 export GENO_STEM="${GENO_STEM:-chr${CHROM}_hm3}"
+
+# Used when GENO_SOURCE=aou:
+#   ACAF_FORMAT   which All of Us file format to read: pgen (PLINK 2,
+#                 compressed, smaller) or bed (PLINK 1; chr22 is ~250 GB).
+#   ACAF_DIR      where All of Us's chromosome files are. Leave empty for the
+#                 standard gs:// folder (the file is copied to the VM first).
+#                 If the Workbench has mounted the dataset under ~/workspace,
+#                 give that folder instead (a path, not gs://): PLINK then
+#                 reads the file in place and fetches only what it needs.
+#                 scripts/prep/check_genotype_access.sh looks for the mount.
+#   HM3_LIST_URI  the HapMap3 variant list (public reference data: rsID,
+#                 chromosome, GRCh38 position, alleles). The instructor put a
+#                 copy in the workshop bucket.
+export ACAF_FORMAT="${ACAF_FORMAT:-pgen}"
+export ACAF_DIR="${ACAF_DIR:-}"
+export HM3_LIST_URI="${HM3_LIST_URI:-${WORKSHOP_BUCKET:+${WORKSHOP_BUCKET%/}/genotypes/hm3_hg38.tsv}}"
 
 # All of Us's genetic-ancestry predictions (used for figure groups and the
 # regression's PCs). This bucket is "requester pays": downloads from it must
@@ -82,5 +124,7 @@ export PHENO="${PHENO:-height}"
 
 # Class-size switch: keep only people whose person_id divides evenly by this
 # number. 10 = roughly a tenth of the cohort (fast queries, quick joins).
-# 1 = everyone, for real work after the lab. Same code either way.
+# 1 = everyone, for real work after the lab. Same code either way. The
+# phenotype query (step 2) and the genotype subset (step 1, aou mode) both
+# apply it, so the two files cover the same people.
 export SAMPLE_MOD="${SAMPLE_MOD:-10}"

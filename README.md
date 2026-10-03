@@ -6,21 +6,26 @@ A one-hour, step-by-step lab on **All of Us v9 Controlled Tier data**
 | Step | What it does | Script |
 |---|---|---|
 | 0 | Check tools and settings | `scripts/00_setup.sh` |
-| 1 | Copy chromosome-22 genotypes (HapMap3 variants) and the ancestry file to the VM | `scripts/01_fetch_genotypes.sh` |
+| 1 | Put chromosome-22 genotypes (HapMap3 variants) and the ancestry file on the VM: copy the ready-made subset, or build it from All of Us's own files | `scripts/01_fetch_genotypes.sh` |
 | 2 | Build a height phenotype from the CDR (BigQuery), one row per person | `scripts/02_build_phenotype.sh` |
-| 3 | Summary table (Stata `summarize` layout) and two figures | `scripts/03_explore_phenotype.sh` |
+| 3 | Summary table and two figures | `scripts/03_explore_phenotype.sh` |
 | 4 | Build a polygenic index (PGI) with PLINK; histogram of the standardized PGI | `scripts/04_build_pgi.sh` |
 | 5 | Regress standardized height on the standardized PGI, age, sex, and 5 PCs | `scripts/05_pgi_regression.sh` |
 | 6 | Check `results/`, write a manifest, archive the run to the workspace bucket | `scripts/06_save_run.sh` |
 
 `slides.pdf` is the deck (each step: what it does, then the commands and
-code). `cheatsheet.pdf` lists terminal, BigQuery, cloud storage, PLINK, and
-git commands for your own projects.
+code). `COMMANDS.txt` lists every command used in the lab, in order, with a
+note on each, to copy and paste from. `cheatsheet.pdf` lists terminal,
+BigQuery, cloud storage, PLINK, and git commands for your own projects.
+
+Every script is written to be read: each step has a comment saying what it
+does, why, and what the same step looks like in your own project. Read
+`scripts/common.sh` first if bash is new to you.
 
 ## Quick start (on your All of Us Workbench VM)
 
-Create a JupyterLab app (standard VM, 4 CPUs / 16 GB, 100 GB disk, autostop
-2 hours), open a Terminal from the Launcher, then:
+Create a JupyterLab app (standard VM, n1-standard-8 = 8 CPUs / 30 GB, 100 GB disk, autostop
+1 hour), open a Terminal from the Launcher, then:
 
 ```bash
 git clone https://github.com/jeffreyswigert/aou-statgen-lab.git
@@ -72,8 +77,8 @@ lists the article numbers.
 
 Code is written and versioned outside the Workbench, cloned onto the VM with
 `git clone`, and updated with `git pull`. The repository holds code, the
-settings template (`config.example.sh`), and documentation. It never holds
-data, results, the filled-in `config.sh`, or notebook outputs. Step 6 writes
+settings template (`config.example.sh`), and documentation. It should never
+hold data, results, the filled-in `config.sh`, or notebook outputs. Step 6 writes
 the repository's commit ID into `results/run_manifest.txt`
 (`code_version=`, with `-dirty` if files were edited after the commit), so
 each archived run names the code that produced it.
@@ -87,13 +92,21 @@ chromosome, in PLINK 2 (`.../acaf_threshold/pgen/`) and PLINK 1
 `gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/`. It does not
 publish a HapMap3 subset, and the chromosome-22 `.bed` alone is about 250 GB.
 
-Before class the instructor ran `scripts/prep/make_hm3_subset.sh`. It reads
-All of Us's chromosome-22 files, keeps the variants on a public HapMap3
-list (rsID, GRCh38 position, alleles; no participant data), renames them
-from `chr22:pos:ref:alt` to rsIDs, and writes
-`$WORKSHOP_BUCKET/genotypes/chr22_hm3.{bed,bim,fam}` (about 2 GB). To build
-another chromosome, run the same script with `CHROM` set, on a VM with a
-large disk (500 GB) and autostop set longer than the job.
+`scripts/subset_aou_genotypes.sh` makes the subset: it reads All of Us's
+chromosome-22 files, keeps the variants on a public HapMap3 list (rsID,
+GRCh38 position, alleles; no participant data), keeps a 1-in-`SAMPLE_MOD`
+sample of people, and renames the variants from `chr22:pos:ref:alt` to
+rsIDs. Step 1 gets the result one of two ways, set by `GENO_SOURCE` in
+`config.sh`:
+
+- `bucket` (default): copy the instructor's ready-made subset from
+  `$WORKSHOP_BUCKET/genotypes/` (built before class with
+  `scripts/prep/make_hm3_subset.sh`, which runs the same subset script for
+  everyone and uploads the result).
+- `aou`: run the subset script yourself, straight from All of Us's file.
+  If the Workbench has mounted the dataset under `~/workspace`, set
+  `ACAF_DIR` to that folder and PLINK reads the file in place; otherwise
+  the file is copied to the VM first (large disk, long autostop).
 
 ## Other phenotypes
 
@@ -118,5 +131,6 @@ regression is cross-trait; the output says so.
 
 The regression is ordinary least squares on a 1-in-10 sample and one
 chromosome; OLS treats participants as unrelated. To extend: `SAMPLE_MOD=1`
-for everyone; build the HapMap3 subset for chromosomes 1–22, score each, and
-add the per-person `SCORE1_SUM` columns; use weights for your own trait.
+for everyone; `GENO_SOURCE=aou CHROM=<n>` to build other chromosomes, score
+each, and add the per-person `SCORE1_SUM` columns; use weights for your own
+trait.
