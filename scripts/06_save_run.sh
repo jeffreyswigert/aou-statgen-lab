@@ -41,6 +41,13 @@ fi
 # decision after a person has reviewed the file.
 python3 scripts/check_disclosure.py results
 
+# The same question for what the steps printed on screen: did any two
+# printed counts differ by 1-20? (scripts/counts.py recorded each one.)
+# With exact counts in AoU mode, a finding stops the script here too.
+if [[ -s work/count_ledger.tsv ]]; then
+  python3 scripts/check_counts.py
+fi
+
 # ---- 2. The manifest -------------------------------------------------------------
 # A unique name for this run: the UTC time, plus a random suffix so that
 # two runs in the same second cannot collide.

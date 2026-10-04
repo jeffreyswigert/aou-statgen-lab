@@ -5,14 +5,14 @@ participants, including a count someone could work out by subtracting two
 numbers you did share. The scripts handle that in one of two ways, chosen
 by the COUNTS setting in config.sh:
 
-  COUNTS=rounded   (the default) every count is printed rounded to the
-                   nearest hundred, like ~57,600. Two rounded numbers
-                   cannot be subtracted to give a small exact count, so
-                   nothing more needs checking.
-  COUNTS=exact     counts are printed exactly, like 57,612. This is safe
-                   only if no two printed counts differ by 1-20, so run
-                       python3 scripts/check_counts.py
-                   afterwards: it lists every pair that does.
+  COUNTS=exact     (the default) counts are printed exactly, like 57,612.
+                   This is safe only if no two printed counts differ by
+                   1-20.  python3 scripts/check_counts.py  lists every
+                   pair that does, and step 6 runs it before saving.
+  COUNTS=rounded   every count is printed rounded to the nearest hundred,
+                   like ~57,600. Two rounded numbers cannot be subtracted
+                   to give a small exact count. Use it when the check
+                   finds a pair and you cannot leave one of the two out.
 
 In both modes a count of 1-20 is printed as <=20, never as the number.
 
@@ -28,7 +28,7 @@ The other scripts use this file with:
 import os
 from pathlib import Path
 
-MODE = os.environ.get('COUNTS', 'rounded')
+MODE = os.environ.get('COUNTS', 'exact')
 if MODE not in ('rounded', 'exact'):
     raise SystemExit(f"COUNTS must be rounded or exact (got '{MODE}')")
 

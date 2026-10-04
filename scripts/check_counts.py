@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """check_counts.py -- would printing exact counts reveal a count of 1-20?
 
-Run after the lab steps, in either COUNTS mode:
+Run after the lab steps, in either COUNTS mode (step 6 also runs it):
     python3 scripts/check_counts.py
 
 It reads work/count_ledger.tsv, where scripts/counts.py recorded the exact
@@ -27,6 +27,7 @@ groups and their total) do not add up to reveal it.
 This printout names the counts and says how far apart they are in words,
 not numbers, so it is safe to show. The exact values stay in the ledger.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -88,7 +89,18 @@ if close_pairs:
     print('pairs above. Keep COUNTS=rounded, or leave one number of each pair out.')
 elif small:
     print('Result: no two counts differ by 1-20. A <=20 count exists: check by hand that')
-    print('the exact counts around it do not add up to reveal it before using COUNTS=exact.')
+    print('the exact counts around it (other groups, totals) do not add up to reveal it.')
 else:
     print('Result: no count is 1-20 and no two counts differ by 1-20.')
     print('COUNTS=exact is safe for this run (sums of three or more counts not checked).')
+
+# ---- The gate ------------------------------------------------------------------
+# With real data and exact counts, a pair above stops the save in step 6,
+# the same way scripts/check_disclosure.py does: the safe outcome is the
+# default, and DISCLOSURE_ACK=1 is an explicit decision after review.
+if close_pairs and MODE == 'exact' and os.environ.get('DATA_MODE') == 'aou' and os.environ.get('DISCLOSURE_ACK') != '1':
+    print()
+    print('BLOCKED: exact counts that differ by 1-20, in AoU mode. Re-run the steps with')
+    print('COUNTS=rounded, or leave one number of each pair out; or, after review, re-run')
+    print('with DISCLOSURE_ACK=1.')
+    raise SystemExit(1)

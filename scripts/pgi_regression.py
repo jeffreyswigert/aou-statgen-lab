@@ -59,8 +59,8 @@ can see every piece. In practice you would usually call a library
 numbers plus p-values and diagnostics.
 
 Printing rule: participant counts go through count_text() in
-scripts/counts.py (rounded to the nearest hundred unless COUNTS=exact;
-1-20 never shown).
+scripts/counts.py (exact, or rounded to the nearest hundred with
+COUNTS=rounded; 1-20 never shown).
 
 TRY IT: in the COVARS line below, delete the five PC names and re-run
     bash scripts/05_pgi_regression.sh

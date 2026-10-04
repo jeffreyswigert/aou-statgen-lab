@@ -17,7 +17,8 @@ THE TABLES
     minimum and maximum, because a minimum or maximum is ONE
     participant's exact value, and printed output here holds only
     aggregates. (Obs goes through count_text() in scripts/counts.py for
-    the same reason: rounded to the nearest hundred unless COUNTS=exact.)
+    the same reason: exact, or rounded to the nearest hundred with
+    COUNTS=rounded.)
   * Block 2: the percentile ladder (1% ... 99%), variance, skewness, and
     kurtosis. Skewness 0 and kurtosis 3 describe a symmetric bell curve
     (this is the convention where a normal distribution scores 3; some

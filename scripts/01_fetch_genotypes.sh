@@ -80,12 +80,11 @@ fi
 ls -lh lab_data/chr${CHROM}_hm3.* lab_data/ancestry_preds.tsv
 n_variants=$(wc -l < "lab_data/chr${CHROM}_hm3.bim")
 n_people=$(wc -l < "lab_data/chr${CHROM}_hm3.fam")
-# Arithmetic in bash goes inside $(( ... )). This rounds the count of
-# people to the nearest hundred before printing it, so the printout is
-# an aggregate figure, not an exact participant count. With COUNTS=exact
-# in config.sh the exact count is printed instead (see scripts/counts.py).
+# The count of people is printed exactly, or rounded to the nearest
+# hundred with COUNTS=rounded in config.sh (scripts/counts.py explains
+# the two). Arithmetic in bash goes inside $(( ... )).
 n_people_rounded=$(( (n_people + 50) / 100 * 100 ))
-if [[ "${COUNTS:-rounded}" == exact ]] && (( n_people > 20 )); then
+if [[ "${COUNTS:-exact}" == exact ]] && (( n_people > 20 )); then
   people_text="$n_people"
 elif (( n_people_rounded == 0 )); then
   people_text="under 100"

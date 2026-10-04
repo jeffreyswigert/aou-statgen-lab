@@ -60,10 +60,13 @@ All four folders are listed in `.gitignore`, so git never commits them.
   Code of Conduct). Person-level files are written only to `lab_data/` and
   `work/`.
 - **No participant count of 1–20 may be shared**, directly or by
-  calculation (Data and Statistics Dissemination Policy). Printed counts are
-  rounded to the nearest 100 and counts of 1–20 print as `<=20`. Step 6 runs
+  calculation (Data and Statistics Dissemination Policy). Counts print
+  exactly, and counts of 1–20 print as `<=20`. Step 6 runs
   `scripts/check_disclosure.py` on `results/` and stops if it finds a count
-  of 1–20, a pair of counts that differ by 1–20, or a person-level file.
+  of 1–20, a pair of counts that differ by 1–20, or a person-level file; it
+  also runs `scripts/check_counts.py`, which stops if any two counts the
+  steps printed differ by 1–20. `COUNTS=rounded` in `config.sh` rounds every
+  count to the nearest 100 instead.
   Figures and free text are not checked; review them yourself.
 - **Downloads are monitored** (Egress Alert Policy). Download only files in
   `results/`: JupyterLab file browser -> right-click -> Download.

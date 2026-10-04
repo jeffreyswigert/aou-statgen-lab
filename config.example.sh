@@ -132,9 +132,11 @@ export PHENO="${PHENO:-height}"
 export SAMPLE_MOD="${SAMPLE_MOD:-1}"
 
 # How counts of people are printed (scripts/counts.py explains both).
+#   exact     the exact count (the default). Safe only if no two printed
+#             counts differ by 1-20. scripts/check_counts.py checks that,
+#             and step 6 runs it before saving.
 #   rounded   to the nearest hundred, like ~57,600. Two rounded numbers
-#             cannot be subtracted to give a small exact count.
-#   exact     the exact count. Safe only if no two printed counts differ
-#             by 1-20; check with:  python3 scripts/check_counts.py
+#             cannot be subtracted to give a small exact count; use this
+#             if the check finds a pair you cannot fix another way.
 # A count of 1-20 is printed as <=20 either way.
-export COUNTS="${COUNTS:-rounded}"
+export COUNTS="${COUNTS:-exact}"

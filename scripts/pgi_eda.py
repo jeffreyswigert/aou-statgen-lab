@@ -24,8 +24,8 @@ Outputs (aggregate only, so they go in results/):
   results/aou_pgi_hist.png      histogram of the standardized PGI
 
 Printing rule as always: participant counts go through count_text() in
-scripts/counts.py (rounded to the nearest hundred unless COUNTS=exact;
-counts of 1-20 are never shown).
+scripts/counts.py (exact, or rounded to the nearest hundred with
+COUNTS=rounded; counts of 1-20 are never shown).
 """
 import numpy as np
 from pathlib import Path

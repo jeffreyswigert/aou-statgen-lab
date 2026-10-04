@@ -184,11 +184,11 @@ SAMPLE_MOD=10 bash scripts/02_build_phenotype.sh
 # the code (step 1 in aou mode uses the same rule).
 
 python3 scripts/check_counts.py
-# Lists any two printed counts that differ by 1-20 people. If it finds
-# none, exact counts are safe for this run:
-COUNTS=exact bash scripts/03_explore_phenotype.sh
-# Prints exact counts instead of counts rounded to the nearest hundred
-# (a count of 1-20 still prints as <=20). Set COUNTS in config.sh to keep it.
+# Lists any two printed counts that differ by 1-20 people (step 6 runs
+# this too). Counts print exactly; a count of 1-20 prints as <=20.
+COUNTS=rounded bash scripts/03_explore_phenotype.sh
+# Rounds counts to the nearest hundred instead: for when the check finds
+# a pair. Set COUNTS in config.sh to keep it.
 
 GENO_SOURCE=aou bash scripts/01_fetch_genotypes.sh
 # Build the chromosome-22 subset from All of Us's own files instead of copying

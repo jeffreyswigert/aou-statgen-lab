@@ -45,8 +45,8 @@ than the shorter one-line forms Python also offers. Where a shorter form
 is common, a comment shows it.
 
 Printing rule: participant counts go through count_text() in
-scripts/counts.py: rounded to the nearest hundred by default, exact with
-COUNTS=exact, and <=20 for a count of 1-20 either way (the All of Us
+scripts/counts.py: exact by default, rounded to the nearest hundred with
+COUNTS=rounded, and <=20 for a count of 1-20 either way (the All of Us
 dissemination policy forbids sharing counts of 1-20, including counts
 recoverable by subtracting two published numbers).
 """
@@ -55,7 +55,7 @@ import os
 import statistics
 from pathlib import Path
 
-from counts import start_step, count_text     # scripts/counts.py: how counts are printed
+from counts import start_step, count_text, MODE as COUNTS_MODE    # scripts/counts.py: how counts are printed
 
 start_step('02 build phenotype')
 
@@ -172,7 +172,14 @@ Path('work/pheno_meta.txt').write_text(
 # ---- Sample counts at each cleaning step -------------------------------------
 print(f'Sample counts at each cleaning step, {LABEL}:')
 print(f'  measurement records pulled          {count_text(n_records, "measurement records pulled")}')
-print(f'  people with any measurement         {count_text(n_people_raw, "people with any measurement")}')
+# With exact counts, the number of people before the bounds and the number
+# after would differ by the number removed. If that is 1-20, a reader could
+# subtract and recover it, so the "before" line is left out. (Rounded
+# counts cannot be subtracted that way, so there it is always shown.)
+if COUNTS_MODE == 'exact' and 1 <= n_implausible <= 20:
+    print('  people with any measurement         (not shown: with the final count it would reveal the <=20 below)')
+else:
+    print(f'  people with any measurement         {count_text(n_people_raw, "people with any measurement")}')
 print(f'  removed: outside {LO:g}-{HI:g} {UNIT:<6} {count_text(n_implausible, "removed: outside the plausible range")}')
 print(f'  people in analysis file             {count_text(len(final), "people in analysis file")}')
 print('Wrote work/aou_pheno.tsv (person-level; stays in the workspace).')
