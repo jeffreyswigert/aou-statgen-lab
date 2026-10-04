@@ -29,8 +29,8 @@
 #                 GRCh38 positions). If unset, the repository's own
 #                 data/hm3_chr22_hg38.tsv is used; for a chromosome with
 #                 no list in data/, one is copied from HM3_LIST_URI.
-#   SAMPLE_MOD    keep people whose ID divides evenly by this (10 = about
-#                 1 in 10; 1 = everyone). The same rule step 02 uses for
+#   SAMPLE_MOD    keep people whose ID divides evenly by this (1 =
+#                 everyone, the default; 10 = about 1 in 10). The same rule step 02 uses for
 #                 the phenotype, so the two files cover the same people.
 #
 # Output: lab_data/chr${CHROM}_hm3.bed / .bim / .fam

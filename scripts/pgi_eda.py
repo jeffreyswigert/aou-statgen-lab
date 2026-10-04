@@ -23,14 +23,19 @@ Outputs (aggregate only, so they go in results/):
   results/aou_pgi_summary.txt   join counts, summary statistics, correlation
   results/aou_pgi_hist.png      histogram of the standardized PGI
 
-Printing rule as always: participant counts are rounded to the nearest
-hundred; counts of 1-20 are never shown.
+Printing rule as always: participant counts go through count_text() in
+scripts/counts.py (rounded to the nearest hundred unless COUNTS=exact;
+counts of 1-20 are never shown).
 """
 import numpy as np
 from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')                   # "no screen here: draw to files"
 import matplotlib.pyplot as plt
+
+from counts import start_step, count_text     # scripts/counts.py: how counts are printed
+
+start_step('04 build PGI')
 
 
 def read_table(path):
@@ -44,13 +49,6 @@ def read_table(path):
         if line.strip():                # skip blank lines
             rows.append(line.split('\t'))
     return header, rows
-
-
-def rounded(n):
-    """A participant count as text: '<=20' for 1-20, else nearest hundred."""
-    if 1 <= n <= 20:
-        return '<=20 (suppressed)'
-    return f'~{round(n, -2):,}'
 
 
 # ---- Step 1: read both files into dicts keyed by person ID -----------------
@@ -108,9 +106,9 @@ percentiles = [1, 5, 25, 50, 75, 95, 99]
 cutpoints = np.percentile(pgi_z, percentiles)
 percentile_text = '  '.join(f'p{p}={c:+.2f}' for p, c in zip(percentiles, cutpoints))
 out = ['QC on the PGI (aggregates only)', '',
-       f'People scored by PLINK:        {rounded(len(score))}',
-       f'People in the phenotype file:  {rounded(len(pheno))}',
-       f'In both (analysis set):        {rounded(len(ids))}', '',
+       f'People scored by PLINK:        {count_text(len(score), "people scored by PLINK")}',
+       f'People in the phenotype file:  {count_text(len(pheno), "people in the phenotype file")}',
+       f'In both (analysis set):        {count_text(len(ids), "in both (analysis set)")}', '',
        f'Raw PGI (SCORE1_SUM):  mean {raw.mean():.4f}   SD {raw.std():.4f}',
        'Standardized PGI_z = (PGI - mean) / SD:  mean 0, SD 1 by construction', '',
        'PGI_z percentiles:  ' + percentile_text,
@@ -136,7 +134,7 @@ ax.plot(grid, normal_curve, color='#202124', lw=1.5, label='standard normal (ref
 ax.set_xlim(-4.5, 4.5)
 ax.set_xlabel('standardized PGI (SD units)')
 ax.set_ylabel('density')
-ax.set_title(f'Standardized PGI, analysis sample (n {rounded(len(ids))})')
+ax.set_title(f'Standardized PGI, analysis sample (n {count_text(len(ids), "in both (analysis set)")})')
 ax.legend(frameon=False, fontsize=8)
 fig.tight_layout()
 fig.savefig('results/aou_pgi_hist.png', dpi=150)

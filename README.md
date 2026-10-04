@@ -138,8 +138,8 @@ regression is cross-trait; the output says so.
 
 ## Scope
 
-The regression is ordinary least squares on a 1-in-10 sample and one
-chromosome; OLS treats participants as unrelated. To extend: `SAMPLE_MOD=1`
-for everyone; `GENO_SOURCE=aou CHROM=<n> HM3_LIST=<list>` to build other chromosomes, score
+The regression is ordinary least squares on one chromosome; OLS treats
+participants as unrelated. `SAMPLE_MOD=10` keeps 1 person in 10 for a quick
+trial run. To extend: `GENO_SOURCE=aou CHROM=<n> HM3_LIST=<list>` to build other chromosomes, score
 each, and add the per-person `SCORE1_SUM` columns; use weights for your own
 trait.

@@ -44,15 +44,20 @@ The style is deliberately plain: loops you can read line by line, rather
 than the shorter one-line forms Python also offers. Where a shorter form
 is common, a comment shows it.
 
-Printing rule: any participant count we print is rounded to the nearest
-hundred, and counts of 1-20 are never printed (the All of Us dissemination
-policy forbids sharing counts of 1-20, including counts recoverable by
-subtracting two published numbers).
+Printing rule: participant counts go through count_text() in
+scripts/counts.py: rounded to the nearest hundred by default, exact with
+COUNTS=exact, and <=20 for a count of 1-20 either way (the All of Us
+dissemination policy forbids sharing counts of 1-20, including counts
+recoverable by subtracting two published numbers).
 """
 import csv
 import os
 import statistics
 from pathlib import Path
+
+from counts import start_step, count_text     # scripts/counts.py: how counts are printed
+
+start_step('02 build phenotype')
 
 # ---- Settings, handed over by 02_build_phenotype.sh -------------------------
 # os.environ is the dictionary of environment variables. .get('NAME',
@@ -64,14 +69,6 @@ LO = float(os.environ.get('PHENO_LO', '-inf'))     # -inf: no lower bound
 HI = float(os.environ.get('PHENO_HI', 'inf'))
 WITHIN_SEX = os.environ.get('PHENO_SEXZ', 'yes') == 'yes'
 NOTE = os.environ.get('PHENO_NOTE', '')
-
-
-def rounded(n):
-    """A participant count as printable text: '<=20' for 1-20, otherwise
-    rounded to the nearest hundred. round(n, -2) rounds to hundreds."""
-    if 1 <= n <= 20:
-        return '<=20'
-    return '~' + str(round(n, -2))
 
 
 # ---- Step 0: read the measurements, grouped by person ------------------------
@@ -174,9 +171,9 @@ Path('work/pheno_meta.txt').write_text(
 
 # ---- Sample counts at each cleaning step -------------------------------------
 print(f'Sample counts at each cleaning step, {LABEL}:')
-print(f'  measurement records pulled          {rounded(n_records)}')
-print(f'  people with any measurement         {rounded(n_people_raw)}')
-print(f'  removed: outside {LO:g}-{HI:g} {UNIT:<6} {rounded(n_implausible)}')
-print(f'  people in analysis file             {rounded(len(final))}')
+print(f'  measurement records pulled          {count_text(n_records, "measurement records pulled")}')
+print(f'  people with any measurement         {count_text(n_people_raw, "people with any measurement")}')
+print(f'  removed: outside {LO:g}-{HI:g} {UNIT:<6} {count_text(n_implausible, "removed: outside the plausible range")}')
+print(f'  people in analysis file             {count_text(len(final), "people in analysis file")}')
 print('Wrote work/aou_pheno.tsv (person-level; stays in the workspace).')
 print('Next: bash scripts/03_explore_phenotype.sh')

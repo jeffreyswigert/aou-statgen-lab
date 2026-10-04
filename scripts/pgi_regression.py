@@ -58,8 +58,9 @@ can see every piece. In practice you would usually call a library
 (statsmodels in Python, lm() in R) and get the same
 numbers plus p-values and diagnostics.
 
-Printing rule: participant counts are rounded to the nearest hundred;
-1-20 never shown.
+Printing rule: participant counts go through count_text() in
+scripts/counts.py (rounded to the nearest hundred unless COUNTS=exact;
+1-20 never shown).
 
 TRY IT: in the COVARS line below, delete the five PC names and re-run
     bash scripts/05_pgi_regression.sh
@@ -68,6 +69,10 @@ the cheapest demonstration of why the PCs belong in the model.
 """
 import numpy as np
 from pathlib import Path
+
+from counts import start_step, count_text     # scripts/counts.py: how counts are printed
+
+start_step('05 PGI regression')
 
 COVARS = ['age', 'female', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5']
 N_PCS = 5
@@ -83,13 +88,6 @@ def read_table(path):
         if line.strip():
             rows.append(line.split('\t'))
     return header, rows
-
-
-def rounded(n):
-    """A participant count as text: '<=20' for 1-20, else nearest hundred."""
-    if 1 <= n <= 20:
-        return '<=20 (suppressed)'
-    return f'~{round(n, -2):,}'
 
 
 # ---- Read the three inputs into dicts keyed by person ID --------------------
@@ -180,7 +178,7 @@ _, _, r2_cov = fit(X[:, 1:])                    # covariates only: every column 
 # ---- Report ------------------------------------------------------------------
 names = ['(intercept)', 'PGI_z'] + COVARS
 out = [f'Regression: {label} (z) ~ PGI_z + age + female + PC1..PC5  (real data; classroom estimate)',
-       f'Analysis N: {rounded(n)}   (rows dropped for missing age/sex or non-M/F: {rounded(n_dropped)})', '',
+       f'Analysis N: {count_text(n, "regression analysis N")}   (rows dropped for missing age/sex or non-M/F: {count_text(n_dropped, "rows dropped for missing age/sex or non-M/F")})', '',
        f"{'term':<12}{'estimate':>10}{'SE':>9}{'t':>8}"]
 for name, b, s in zip(names, beta, se):
     out.append(f'{name:<12}{b:>10.4f}{s:>9.4f}{b / s:>8.2f}')

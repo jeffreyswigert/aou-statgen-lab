@@ -179,8 +179,16 @@ AFTER CLASS: settings that change what the steps do
 PHENO=ldl bash scripts/02_build_phenotype.sh
 # Another phenotype from the menu. Steps 3 and 5 follow the choice.
 
-SAMPLE_MOD=1 bash scripts/02_build_phenotype.sh
-# Everyone instead of 1 person in 10 (step 1 in aou mode uses the same rule).
+SAMPLE_MOD=10 bash scripts/02_build_phenotype.sh
+# 1 person in 10 instead of everyone: a quick trial run when you change
+# the code (step 1 in aou mode uses the same rule).
+
+python3 scripts/check_counts.py
+# Lists any two printed counts that differ by 1-20 people. If it finds
+# none, exact counts are safe for this run:
+COUNTS=exact bash scripts/03_explore_phenotype.sh
+# Prints exact counts instead of counts rounded to the nearest hundred
+# (a count of 1-20 still prints as <=20). Set COUNTS in config.sh to keep it.
 
 GENO_SOURCE=aou bash scripts/01_fetch_genotypes.sh
 # Build the chromosome-22 subset from All of Us's own files instead of copying

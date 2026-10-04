@@ -124,9 +124,17 @@ export WEIGHTS_URI="${WEIGHTS_URI:-${WORKSHOP_BUCKET:+$WORKSHOP_BUCKET/pgi_works
 # another variable is one line:  PHENO=ldl bash scripts/02_build_phenotype.sh
 export PHENO="${PHENO:-height}"
 
-# Class-size switch: keep only people whose person_id divides evenly by this
-# number. 10 = roughly a tenth of the cohort (fast queries, quick joins).
-# 1 = everyone, for real work after the lab. Same code either way. The
-# phenotype query (step 2) and the genotype subset (step 1, aou mode) both
-# apply it, so the two files cover the same people.
-export SAMPLE_MOD="${SAMPLE_MOD:-10}"
+# Sample-size switch: keep only people whose person_id divides evenly by this
+# number. 1 = everyone (the default). 10 = roughly a tenth of the cohort,
+# for a quick trial run of new code. Same code either way. The phenotype
+# query (step 2) and the genotype subset (step 1, aou mode) both apply it,
+# so the two files cover the same people.
+export SAMPLE_MOD="${SAMPLE_MOD:-1}"
+
+# How counts of people are printed (scripts/counts.py explains both).
+#   rounded   to the nearest hundred, like ~57,600. Two rounded numbers
+#             cannot be subtracted to give a small exact count.
+#   exact     the exact count. Safe only if no two printed counts differ
+#             by 1-20; check with:  python3 scripts/check_counts.py
+# A count of 1-20 is printed as <=20 either way.
+export COUNTS="${COUNTS:-rounded}"

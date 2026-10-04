@@ -8,8 +8,8 @@
 #
 # The actual work is scripts/subset_aou_genotypes.sh, the same script
 # participants run in aou mode. This wrapper only sets SAMPLE_MOD=1 (the
-# posted subset holds everyone; the 1-in-N rule is applied later by step
-# 02's query, and the joins take the people in both files) and uploads
+# posted subset holds everyone; a participant's own SAMPLE_MOD is applied
+# by step 02's query, and the joins take the people in both files) and uploads
 # the result.
 #
 # Run (the HapMap3 list is the repository's data/hm3_chr22_hg38.tsv):

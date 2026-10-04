@@ -134,10 +134,13 @@ with open(args.samples) as f, open(os.path.join(args.out_dir, 'keep.txt'), 'w') 
         if int(person_id) % args.sample_mod == 0:
             keep.write(person_id + '\n')
             n_kept += 1
-# Printed counts are rounded to the nearest hundred: these are participant
-# counts, and this printout could end up in a shared terminal log.
+# Printed counts are rounded to the nearest hundred unless COUNTS=exact
+# (config.sh): these are participant counts, and this printout could end
+# up in a shared terminal log.
 def about(n):
-    """A count rounded to the nearest hundred, as text."""
+    """A count as text: exact with COUNTS=exact, else the nearest hundred."""
+    if os.environ.get('COUNTS', 'rounded') == 'exact' and n > 20:
+        return f'{n:,}'
     if round(n, -2) == 0:
         return 'under 100'
     return f'about {round(n, -2):,}'

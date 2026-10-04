@@ -82,9 +82,16 @@ n_variants=$(wc -l < "lab_data/chr${CHROM}_hm3.bim")
 n_people=$(wc -l < "lab_data/chr${CHROM}_hm3.fam")
 # Arithmetic in bash goes inside $(( ... )). This rounds the count of
 # people to the nearest hundred before printing it, so the printout is
-# an aggregate figure, not an exact participant count.
+# an aggregate figure, not an exact participant count. With COUNTS=exact
+# in config.sh the exact count is printed instead (see scripts/counts.py).
 n_people_rounded=$(( (n_people + 50) / 100 * 100 ))
-if (( n_people_rounded == 0 )); then people_text="under 100"; else people_text="about $n_people_rounded"; fi
+if [[ "${COUNTS:-rounded}" == exact ]] && (( n_people > 20 )); then
+  people_text="$n_people"
+elif (( n_people_rounded == 0 )); then
+  people_text="under 100"
+else
+  people_text="about $n_people_rounded"
+fi
 echo "chr${CHROM}: $n_variants variants staged; $people_text people in the file."
 
 # Look at the first lines of each text file before using it. Different

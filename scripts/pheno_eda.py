@@ -16,8 +16,8 @@ THE TABLES
     and the 25th, 50th, and 75th percentiles. Percentiles rather than the
     minimum and maximum, because a minimum or maximum is ONE
     participant's exact value, and printed output here holds only
-    aggregates. (Obs is rounded to the nearest hundred for the same
-    reason.)
+    aggregates. (Obs goes through count_text() in scripts/counts.py for
+    the same reason: rounded to the nearest hundred unless COUNTS=exact.)
   * Block 2: the percentile ladder (1% ... 99%), variance, skewness, and
     kurtosis. Skewness 0 and kurtosis 3 describe a symmetric bell curve
     (this is the convention where a normal distribution scores 3; some
@@ -39,6 +39,10 @@ from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')                   # "no screen here: draw to files"
 import matplotlib.pyplot as plt
+
+from counts import start_step, count_text     # scripts/counts.py: how counts are printed
+
+start_step('03 explore phenotype')
 
 # ---- Which phenotype is this? ----------------------------------------------
 # Step 02 wrote a small key=value file. Read it into a dict.
@@ -72,21 +76,14 @@ sex = np.array(sexes)
 age = np.array(ages)
 
 
-def rounded(n):
-    """A participant count as text: '<=20' for 1-20, else nearest hundred."""
-    if 1 <= n <= 20:
-        return '<=20'
-    return f'~{round(n, -2):,}'         # the , inserts thousands separators
-
-
 # ---- Block 1: the summary table ---------------------------------------------
 def summary_row(rowname, x):
-    """One table row: Obs (rounded), mean, SD, p25, median, p75.
+    """One table row: Obs (through count_text), mean, SD, p25, median, p75.
     x.std(ddof=1) is the sample SD (divides by n-1); np.percentile gives
     the requested percentiles. The format codes (>10.2f) mean: right-
     aligned in 10 characters, 2 decimal places."""
     p25, p50, p75 = np.percentile(x, [25, 50, 75])
-    return (f'{rowname:>13} | {rounded(len(x)):>9}  {x.mean():>10.2f}  {x.std(ddof=1):>10.2f}'
+    return (f'{rowname:>13} | {count_text(len(x), "Obs, " + rowname):>9}  {x.mean():>10.2f}  {x.std(ddof=1):>10.2f}'
             f'  {p25:>9.1f}  {p50:>9.1f}  {p75:>9.1f}')
 
 
@@ -101,7 +98,7 @@ for s in ('Male', 'Female', 'other'):
     if in_group.sum() > 20:             # .sum() counts the Trues
         out.append(summary_row(s, v[in_group]))     # v[in_group] keeps those rows
     else:
-        out.append(f'{s:>13} | {rounded(int(in_group.sum())):>9}  -- too few to display separately')
+        out.append(f'{s:>13} | {count_text(int(in_group.sum()), "Obs, " + s):>9}  -- too few to display separately')
 has_age = np.isfinite(age)              # True where age is not nan
 if has_age.sum() > 20:
     out.append(summary_row('age', age[has_age]))
@@ -129,7 +126,7 @@ fig, ax = plt.subplots(figsize=(7, 4.5))
 ax.hist(v, bins=60, color='#990000', alpha=0.8)
 ax.set_xlabel(name)
 ax.set_ylabel('people')
-ax.set_title(f'{label}, analysis sample (n {rounded(len(v))})')
+ax.set_title(f'{label}, analysis sample (n {count_text(len(v), "Obs, " + meta.get("id", "value")[:13])})')
 fig.tight_layout()
 fig.savefig('results/aou_pheno_hist.png', dpi=150)
 
@@ -155,7 +152,7 @@ for s, color in (('Male', '#666666'), ('Female', '#990000')):
     in_group = (sex == s)
     if in_group.sum() > 20:
         ax.plot(grid, kde(v[in_group], grid), color=color, lw=2,
-                label=f'{s} (n {rounded(int(in_group.sum()))})')
+                label=f'{s} (n {count_text(int(in_group.sum()), "Obs, " + s)})')
 ax.set_xlabel(name)
 ax.set_ylabel('density')
 ax.set_title(f'{label} by recorded sex')

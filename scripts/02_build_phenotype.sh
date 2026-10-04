@@ -75,8 +75,9 @@ echo "  note: $note"
 #   FROM `table`       which table (project.dataset.table, in backticks)
 #   WHERE ...          which rows: the concept IDs we chose, with a value,
 #                      and MOD(person_id, N) = 0: the person's ID divides
-#                      evenly by N, which keeps about 1 person in N. It is
-#                      the class-size switch from config.sh, and the same
+#                      evenly by N, which keeps about 1 person in N (every
+#                      ID divides evenly by 1, so N = 1 keeps everyone). It
+#                      is the sample-size switch from config.sh, and the same
 #                      rule step 1 (aou mode) applies to the genotypes.
 # A bash variable can hold several lines of text; the query is built here
 # so that DRY_RUN can print it and bq can run it, from one definition.
@@ -132,7 +133,8 @@ run_query() {
   fi
 }
 
-echo "Query 1: $PHENO measurements, 1 person in ${SAMPLE_MOD} ..."
+if [[ "$SAMPLE_MOD" == 1 ]]; then who=everyone; else who="1 person in $SAMPLE_MOD"; fi
+echo "Query 1: $PHENO measurements, $who ..."
 run_query work/raw_pheno.csv "$Q1"
 echo 'Query 2: year of birth and sex at birth ...'
 run_query work/raw_person.csv "$Q2"
