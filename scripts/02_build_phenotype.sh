@@ -73,28 +73,35 @@ echo "  note: $note"
 # SQL, line by line:
 #   SELECT a, b        which columns to return
 #   FROM `table`       which table (project.dataset.table, in backticks)
-#   WHERE ...          which rows: the concept IDs we chose, with a value,
-#                      and MOD(person_id, N) = 0: the person's ID divides
-#                      evenly by N, which keeps about 1 person in N (every
-#                      ID divides evenly by 1, so N = 1 keeps everyone). It
-#                      is the sample-size switch from config.sh, and the same
-#                      rule step 1 (aou mode) applies to the genotypes.
+#   WHERE ...          which rows: the concept IDs we chose, with a value.
+# With SAMPLE_MOD above 1 in config.sh, one more condition is added:
+# MOD(person_id, N) = 0, "the person's ID divides evenly by N", which
+# keeps about 1 person in N for a quick trial run. It is the same rule
+# step 1 (aou mode) applies to the genotypes. With SAMPLE_MOD=1, the
+# default, nothing is added and the queries return everyone.
+if [[ "$SAMPLE_MOD" == 1 ]]; then
+  sample_rule_1=""
+  sample_rule_2=""
+else
+  sample_rule_1="
+    AND MOD(person_id, $SAMPLE_MOD) = 0"
+  sample_rule_2="
+  WHERE MOD(p.person_id, $SAMPLE_MOD) = 0"
+fi
 # A bash variable can hold several lines of text; the query is built here
 # so that DRY_RUN can print it and bq can run it, from one definition.
 Q1="
   SELECT person_id, value_as_number
   FROM \`$CDR_DATASET.measurement\`
   WHERE $concept_column IN ($concept_ids)
-    AND value_as_number IS NOT NULL
-    AND MOD(person_id, $SAMPLE_MOD) = 0"
+    AND value_as_number IS NOT NULL$sample_rule_1"
 # The second query joins two tables: person (year of birth, and the ID of
 # the sex-at-birth answer) with concept (the words that ID stands for).
 # JOIN ... ON says which columns must match between the two tables.
 Q2="
   SELECT p.person_id, p.year_of_birth, c.concept_name AS sex_at_birth
   FROM \`$CDR_DATASET.person\` p
-  JOIN \`$CDR_DATASET.concept\` c ON c.concept_id = p.sex_at_birth_concept_id
-  WHERE MOD(p.person_id, $SAMPLE_MOD) = 0"
+  JOIN \`$CDR_DATASET.concept\` c ON c.concept_id = p.sex_at_birth_concept_id$sample_rule_2"
 
 # ---- DRY_RUN mode: show the SQL and stop -------------------------------------
 if [[ "${DRY_RUN:-}" == 1 ]]; then
