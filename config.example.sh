@@ -112,7 +112,8 @@ export HM3_LIST_URI="${HM3_LIST_URI:-}"
 # name a billing project, which our fetch script handles.
 export ANC_SRC="${ANC_SRC:-gs://vwb-aou-datasets-controlled/v9/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv}"
 
-# The PGI weight file: published height GWAS summary statistics, converted
+# The PGI weight file: height weights from Yengo et al. (2022, Nature,
+# doi:10.1038/s41586-022-05275-y), PGS Catalog score PGS002802, converted
 # by the instructor to three columns (rsid, effect_allele, weight) and put
 # in the workshop bucket.
 export WEIGHTS_URI="${WEIGHTS_URI:-${WORKSHOP_BUCKET:+$WORKSHOP_BUCKET/pgi_workshop/height_weights.txt}}"

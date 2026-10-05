@@ -120,6 +120,17 @@ position and wrote five columns: `rsid`, `chr`, `pos` (GRCh38), `a1`, `a2`.
 For another chromosome, make the same file from `map.rds` and name it with
 `HM3_LIST`.
 
+## Where the PGI weights come from
+
+Step 4 reads `height_weights.txt` from the workshop bucket. It holds the
+chromosome-22 rows of PGS Catalog score
+[PGS002802](https://www.pgscatalog.org/score/PGS002802/): multi-ancestry
+height weights from Yengo et al. (2022), "A saturated map of common genetic
+variants associated with human height", *Nature*,
+<https://doi.org/10.1038/s41586-022-05275-y>. The instructor makes the file
+with `scripts/prep/make_height_weights.sh`, which also works for any other
+PGS Catalog scoring file that has rsIDs.
+
 ## Other phenotypes
 
 `data/phenotypes.tsv` lists numeric phenotypes with their concept IDs,
