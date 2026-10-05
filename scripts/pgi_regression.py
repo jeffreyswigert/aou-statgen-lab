@@ -62,7 +62,9 @@ Printing rule: participant counts go through count_text() in
 scripts/counts.py (exact, or rounded to the nearest hundred with
 COUNTS=rounded; 1-20 never shown).
 
-TRY IT: in the COVARS line below, delete the five PC names and re-run
+TRY IT: in the COVARS line below, delete the five PC names, so it reads
+    COVARS = ['age', 'female']
+and re-run
     bash scripts/05_pgi_regression.sh
 Watch the PGI coefficient move. That movement is population structure:
 the cheapest demonstration of why the PCs belong in the model.
@@ -74,8 +76,10 @@ from counts import start_step, count_text     # scripts/counts.py: how counts ar
 
 start_step('05 PGI regression')
 
+# The covariates in the model, by name. This list is the model: remove a
+# name and that term leaves the regression; the table and the heading
+# follow. Available names: age, female, and PC1 ... PC16.
 COVARS = ['age', 'female', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5']
-N_PCS = 5
 
 
 def read_table(path):
@@ -109,12 +113,12 @@ pca_col = anc_header.index('pca_features')
 pcs = {}
 for row in anc_rows:
     # Unpack the bracketed PC string: remove the [ and ], split on commas,
-    # turn each piece into a number, keep the first five.
+    # and turn each piece into a number. The file has 16 PCs per person.
     text = row[pca_col].strip('[]')
     numbers = []
     for piece in text.split(','):
         numbers.append(float(piece))
-    pcs[row[0]] = numbers[:N_PCS]               # column 0 is research_id
+    pcs[row[0]] = numbers                       # column 0 is research_id
 
 meta = {}
 for line in Path('work/pheno_meta.txt').read_text().splitlines():
@@ -140,8 +144,19 @@ for pid in sorted(set(score) & set(pheno) & set(pcs)):
         female = 1.0
     else:
         female = 0.0
+    # Every covariate this person could contribute, by name ...
+    available = {'age': float(age), 'female': female}
+    for k, pc_value in enumerate(pcs[pid]):
+        available[f'PC{k + 1}'] = pc_value      # PC1, PC2, ...
+    # ... and the ones named in COVARS, in that order, after the PGI.
+    x_row = [score[pid]]                        # column 0: the PGI (raw)
+    for name in COVARS:
+        if name not in available:
+            raise SystemExit(f"COVARS names '{name}', which is not available. "
+                             f"Choose from: {', '.join(available)}")
+        x_row.append(available[name])
     y_list.append(float(value_z))
-    x_list.append([score[pid], float(age), female] + pcs[pid])   # PGI (raw), age, female, PC1..PC5
+    x_list.append(x_row)
 
 y = np.array(y_list)
 X = np.array(x_list)                            # one row per person, one column per predictor
@@ -177,7 +192,8 @@ _, _, r2_cov = fit(X[:, 1:])                    # covariates only: every column 
 
 # ---- Report ------------------------------------------------------------------
 names = ['(intercept)', 'PGI_z'] + COVARS
-out = [f'Regression: {label} (z) ~ PGI_z + age + female + PC1..PC5  (real data; classroom estimate)',
+model_text = ' + '.join(['PGI_z'] + COVARS)
+out = [f'Regression: {label} (z) ~ {model_text}  (real data; classroom estimate)',
        f'Analysis N: {count_text(n, "regression analysis N")}   (rows dropped for missing age/sex or non-M/F: {count_text(n_dropped, "rows dropped for missing age/sex or non-M/F")})', '',
        f"{'term':<12}{'estimate':>10}{'SE':>9}{'t':>8}"]
 for name, b, s in zip(names, beta, se):
@@ -187,7 +203,7 @@ out += ['',
         f'R2 covariates  = {r2_cov:.4f}',
         f'incremental R2 = {r2_full - r2_cov:.4f}', '',
         f'Reading the headline row: a person one SD higher in this PGI is {beta[1]:+.3f} SD higher',
-        f'in {label}, holding age, sex, and five PCs fixed. Association, not cause;',
+        f'in {label}, holding the other terms in the model fixed. Association, not cause;',
         'one chromosome, not a full index; independent-samples OLS, not a family model.']
 if meta.get('id', 'height') != 'height':
     out += ['', f'NOTE: the posted weights are HEIGHT weights and the outcome is {label},',
