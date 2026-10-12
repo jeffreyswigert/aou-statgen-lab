@@ -1,4 +1,4 @@
-# Statistical genetics on All of Us: Lab 1
+# Statistical genetics on All of Us: Session 1
 
 A one-hour, step-by-step lab on **All of Us v9 Controlled Tier data**
 (Controlled Tier access required). Each step is one script:

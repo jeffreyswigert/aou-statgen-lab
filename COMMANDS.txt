@@ -1,4 +1,4 @@
-COMMANDS.txt -- every command used in Lab 1, in order, to copy and paste from.
+COMMANDS.txt -- every command used in Session 1, in order, to copy and paste from.
 ================================================================================
 Lines starting with # are notes. Each command is followed by what it does and
 how it generalizes beyond this lab. This file is also online, so you can open
