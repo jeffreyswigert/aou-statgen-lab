@@ -24,14 +24,54 @@ does, why, and what the same step looks like in your own project. Read
 
 ## Quick start (on your All of Us Workbench VM)
 
-Create a JupyterLab app (standard VM, n1-standard-8 = 8 CPUs / 30 GB, 100 GB disk, autostop
-1 hour), open a Terminal from the Launcher, then:
+Open the repository in a browser tab and keep it open during the lab: the
+slides are brief on purpose, and the README, the comments in each script,
+and `COMMANDS.txt` explain every step in more detail.
+
+Run the commands below **one at a time**, in order, and wait for each to
+finish before starting the next.
+
+**1. Start a cloud environment.** In the workshop workspace: Apps tab ->
+New app instance -> JupyterLab (standard VM, n1-standard-8 = 8 CPUs /
+30 GB, 100 GB disk, autostop 1 hour). Creation takes a few minutes. When
+it is running, open it and start a Terminal from the Launcher.
+
+**2. Get the code and open the settings file.**
 
 ```bash
 git clone https://github.com/jeffreyswigert/aou-statgen-lab.git
 cd aou-statgen-lab
-cp config.example.sh config.sh     # then fill WORKSHOP_BUCKET and BILLING_PROJECT
+cp config.example.sh config.sh
+nano config.sh
+```
+
+**3. Fill in the two values marked `FILL ME`.** The instructor shows both
+on screen. Each also comes from the workshop workspace's page in the
+Researcher Workbench:
+
+- `WORKSHOP_BUCKET`: the workspace's cloud storage bucket. Open the
+  workspace's **Resources** tab and find the Cloud Storage bucket
+  resource; copy its bucket name and write it with the `gs://` prefix,
+  for example `export WORKSHOP_BUCKET="gs://<bucket name>"`.
+- `BILLING_PROJECT`: the workspace's Google project. On the workspace's
+  **Overview** page, the **Workspace details** panel lists **Google
+  project** (it looks like `wb-word-word-1234`), for example
+  `export BILLING_PROJECT="wb-word-word-1234"`.
+
+To save and leave nano: press `Ctrl-O`, then `Enter`, then `Ctrl-X`. If
+that does not work in your browser (reported on Windows), press `Ctrl-X`,
+then `Y`, then `Enter`. Either sequence saves the file and exits.
+
+**4. Check the setup.** The last line should read `Setup check passed.`
+If a value is missing, the script names it and stops.
+
+```bash
 bash scripts/00_setup.sh
+```
+
+**5. Run the steps**, one at a time, waiting for each to finish:
+
+```bash
 bash scripts/01_fetch_genotypes.sh
 bash scripts/02_build_phenotype.sh
 bash scripts/03_explore_phenotype.sh
@@ -42,6 +82,19 @@ bash scripts/06_save_run.sh
 
 When you finish, stop the app (Apps tab -> your app -> Stop). Stopping keeps
 the app and its disk, so your files are there when you start it again.
+
+## Autostop: when to change it
+
+Autostop stops the VM after it has been idle for the time you set (1 hour
+today). The VM counts as idle when, for 15 minutes, average CPU use is
+below 50% and no browser tab or terminal connection is active. Keep it on
+for interactive work. Some long jobs look idle by that rule and can be
+stopped halfway through: a single-threaded program on an 8-CPU VM (one
+busy CPU is 12.5% use), a large copy from a bucket (which waits on the
+network), or a script waiting on a long BigQuery query. For those, set
+autostop longer than the job (up to 14 days), or keep the browser tab
+open. Turn it off only if you will stop the VM yourself. A running VM
+bills by the hour; a stopped VM bills only for its disk.
 
 ## Folders
 
@@ -85,6 +138,20 @@ hold data, results, the filled-in `config.sh`, or notebook outputs. Step 6 write
 the repository's commit ID into `results/run_manifest.txt`
 (`code_version=`, with `-dirty` if files were edited after the commit), so
 each archived run names the code that produced it.
+
+`.gitignore` lists what git never tracks. This repository's ignores
+`config.sh` (your filled-in settings), `lab_data/`, `work/`, `results/`,
+`runs/`, and `.ipynb_checkpoints/`. Practices that carry over to any
+project:
+
+- Put data and outputs in folders, and ignore the folders by name.
+- Commit a settings template (`config.example.sh`); ignore the filled-in
+  copy (`config.sh`). `git check-ignore -v config.sh` prints the line that
+  excludes it; if it prints nothing, fix `.gitignore` before committing.
+- Clear notebook outputs before committing (JupyterLab: Edit -> Clear All
+  Outputs). A saved `.ipynb` file stores its outputs.
+- Before `git push`, run `git status` and `git diff --cached` to see
+  exactly what will be sent.
 
 ## Where the genotypes come from
 
@@ -149,6 +216,15 @@ variable, find its concept ID in the public
 [Data Browser](https://databrowser.researchallofus.org) and add a row.
 The PGI weights are for height, so with another phenotype the step-05
 regression is cross-trait; the output says so.
+
+## After class
+
+- Delete the five PC names from `COVARS` in `scripts/pgi_regression.py`,
+  re-run step 5, and compare the `PGI_z` row with and without the
+  principal components.
+- `COMMANDS.txt`, section "After class", lists the settings that change
+  what the steps do (`PHENO`, `SAMPLE_MOD`, `GENO_SOURCE`, `CHROM`,
+  `COUNTS`).
 
 ## Scope
 

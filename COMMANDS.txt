@@ -5,6 +5,9 @@ how it generalizes beyond this lab. This file is also online, so you can open
 it in a browser tab before you have cloned anything:
   https://raw.githubusercontent.com/jeffreyswigert/aou-statgen-lab/main/COMMANDS.txt
 
+Run one command at a time, in order, and wait for it to finish before the
+next. Do not paste a whole block at once.
+
 Conventions used below:
   bash scripts/X.sh          run script X with bash
   NAME=value bash ...        set a setting for this one command only
@@ -30,8 +33,15 @@ cp config.example.sh config.sh
 # General: commit a template; keep the filled copy out of git.
 
 nano config.sh
-# Open the settings file in a text editor. Fill in WORKSHOP_BUCKET and
-# BILLING_PROJECT (the instructor projects them). Ctrl-O saves, Ctrl-X exits.
+# Open the settings file in a text editor. Fill in the two "FILL ME" values
+# (the instructor projects them; both are on the workshop workspace's page in
+# the Workbench):
+#   WORKSHOP_BUCKET  Resources tab -> the Cloud Storage bucket resource ->
+#                    its bucket name, written with the gs:// prefix
+#   BILLING_PROJECT  Overview page -> Workspace details -> Google project
+#                    (looks like wb-word-word-1234)
+# To save and exit nano: Ctrl-O, Enter, Ctrl-X. If that does not work in your
+# browser (reported on Windows): Ctrl-X, then Y, then Enter.
 
 git check-ignore -v config.sh
 # Ask git which .gitignore line excludes config.sh. If it prints nothing, the

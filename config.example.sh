@@ -4,6 +4,7 @@
 # Do this once, at the start of the lab:
 #     cp config.example.sh config.sh
 #     nano config.sh          # fill in the two "FILL ME" values
+#     (save and exit nano: Ctrl-O, Enter, Ctrl-X; or Ctrl-X, Y, Enter)
 #
 # Why a settings file at all? The scripts are the same for everyone; the
 # values below (your bucket, the billing project, the CDR release, which
@@ -44,10 +45,14 @@ export DATA_MODE=aou
 
 # The workshop workspace's cloud storage bucket (starts with gs://). The
 # instructor put today's genotype subset and PGI weights here, and your
-# saved run goes here too.
+# saved run goes here too. In the Workbench: the workspace's Resources tab
+# -> the Cloud Storage bucket resource -> its bucket name, with gs:// in
+# front, e.g. "gs://my-workspace-bucket-wb-word-word-1234".
 export WORKSHOP_BUCKET="${WORKSHOP_BUCKET:-}"
 
-# The Google Cloud project that pays for queries and copies.
+# The Google Cloud project that pays for queries and copies. In the
+# Workbench: the workspace's Overview page -> Workspace details -> Google
+# project, e.g. "wb-word-word-1234".
 export BILLING_PROJECT="${BILLING_PROJECT:-}"
 
 # ---- Set for v9; change only for a different CDR release -------------------
