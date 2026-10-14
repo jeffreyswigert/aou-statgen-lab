@@ -39,9 +39,11 @@ MENU=data/phenotypes.tsv
 # $1 is the first word typed after the script name; ${1:-} makes it empty
 # rather than an error when nothing was typed (the -u switch would object).
 if [[ "${1:-}" == list ]]; then
-  # column -t -s $'\t' lines up a tab-separated file for reading;
-  # cut -f 1,2,5,6,7 keeps only the columns worth showing.
-  cut -f 1,2,5,6,7 "$MENU" | column -t -s $'\t'
+  # cut -f 1,2,5,6,7 keeps only the columns worth showing. expand turns
+  # each tab into spaces up to the next tab stop (here at characters 14,
+  # 40, 46, 52), which lines up the columns for reading. (The column tool
+  # usually used for this is not installed on the All of Us image.)
+  cut -f 1,2,5,6,7 "$MENU" | expand -t 14,40,46,52
   echo 'Pick one with:  PHENO=<id> bash scripts/02_build_phenotype.sh'
   exit 0
 fi

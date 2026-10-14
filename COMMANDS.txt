@@ -101,7 +101,7 @@ bash scripts/02_build_phenotype.sh list
 STEP 3: look at the phenotype
 -------------------------------------------------------------------------------
 
-head -n 3 work/aou_pheno.tsv | column -t
+head -n 3 work/aou_pheno.tsv | expand -t 14
 # The first 3 lines, with the columns lined up. Output stays on your screen.
 
 wc -l work/aou_pheno.tsv
