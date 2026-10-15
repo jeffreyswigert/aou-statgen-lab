@@ -43,6 +43,12 @@ nano config.sh
 # To save and exit nano: Ctrl-O, Enter, Ctrl-X. If that does not work in your
 # browser (reported on Windows): Ctrl-X, then Y, then Enter.
 
+source config.sh
+# Load the settings into this terminal, so that $WORKSHOP_BUCKET and the other
+# names work when you type them yourself (as in the last command of step 6).
+# The scripts load config.sh on their own; your terminal does not. Repeat this
+# in every new terminal tab.
+
 git check-ignore -v config.sh
 # Ask git which .gitignore line excludes config.sh. If it prints nothing, the
 # file would be committed: stop and fix .gitignore.
